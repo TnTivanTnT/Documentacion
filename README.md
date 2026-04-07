@@ -68,9 +68,3 @@ Este índice organiza toda la documentación técnica para nuevos integrantes de
 | Markdown | Principiante | Sintaxis básica, enlaces, imágenes |
 | Markdown | Intermedio | Código, tablas, citas |
 | Markdown | Avanzado | HTML, Obsidian, extensiones |
-
----
-
-## Proyectos Relacionados
-
-Para ver los proyectos del equipo, ir a [Índice Proyectos](../Proyectos/Índice%20Proyectos.md)
