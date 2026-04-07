@@ -1,6 +1,6 @@
 # Guía GitHub - Nivel Intermedio
 
-> 📚 [Volver al Índice de Documentación](../Índice%20Documentación.md)
+> 📚 [Volver al Índice de Documentación](../README.md)
 
 ## Índice
 - [Branching](#branching)

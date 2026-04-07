@@ -1,6 +1,6 @@
 # Guía Markdown - Nivel Principiante
 
-> 📚 [Volver al Índice de Documentación](../Índice%20Documentación.md)
+> 📚 [Volver al Índice de Documentación](../README.md)
 
 ## Índice
 - [¿Qué es Markdown?](#qué-es-markdown)

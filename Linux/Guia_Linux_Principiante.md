@@ -1,6 +1,6 @@
 # Guía Linux - Nivel Principiante
 
-> 📚 [Volver al Índice de Documentación](../Índice%20Documentación.md)
+> 📚 [Volver al Índice de Documentación](../README.md)
 
 ## Índice
 - [Introducción a la Terminal](#introducción-a-la-terminal)

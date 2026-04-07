@@ -1,6 +1,6 @@
 # Guía Linux - Nivel Avanzado
 
-> 📚 [Volver al Índice de Documentación](../Índice%20Documentación.md)
+> 📚 [Volver al Índice de Documentación](../README.md)
 
 ## Índice
 - [Scripting en Bash](#scripting-en-bash)

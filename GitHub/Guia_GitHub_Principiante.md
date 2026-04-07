@@ -1,6 +1,6 @@
 # Guía GitHub - Nivel Principiante
 
-> 📚 [Volver al Índice de Documentación](../Índice%20Documentación.md)
+> 📚 [Volver al Índice de Documentación](../README.md)
 
 ## Índice
 - [Introducción a Git y GitHub](#introducción-a-git-y-github)

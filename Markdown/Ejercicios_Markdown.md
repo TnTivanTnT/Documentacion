@@ -1,6 +1,6 @@
 # Ejercicios Prácticos - Markdown
 
-> 📚 [Volver al Índice de Documentación](../Índice%20Documentación.md)
+> 📚 [Volver al Índice de Documentación](../README.md)
 
 Este documento contiene ejercicios prácticos para reforzar los conceptos de las guías de Markdown.
 
