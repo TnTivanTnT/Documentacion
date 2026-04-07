@@ -791,7 +791,7 @@ main()
 
 ## Licencia
 
-MIT License - ver [LICENSE](LICENSE) para más detalles.
+Especificar tipo de licencia.
 ```
 
 #### Ejercicio 5.2: Documentación de código

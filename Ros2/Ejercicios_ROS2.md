@@ -623,6 +623,38 @@ ros2 launch mis_ejercicios mi_launch.py frecuencia:=2.0 mensaje:=Test
 
 > 📖 **Teoría:** [Guía ROS2 Intermedio - Workspace](Guia_ROS2_Intermedio.md#workspace-y-paquetes)
 
+#### Ejercicio 5.0: Entender build types
+
+**Pregunta:** ¿Qué build type usarías para cada caso?
+
+1. Un nodo que lee sensores y publica datos
+2. Una definición de mensaje personalizado `SensorCalibrado.msg`
+3. Un servicio para calibrar el robot
+4. Un script Python que procesa datos de sensores
+5. Una acción para navegación autónoma
+6. Un nodo de alto rendimiento en C++
+7. Un launch file en Python
+
+<details>
+<summary>Click para ver las respuestas</summary>
+
+1. **`ament_python`** - Nodo Python
+2. **`ament_cmake`** - Interfaz (mensaje personalizado)
+3. **`ament_cmake`** - Interfaz (servicio personalizado)
+4. **`ament_python`** - Script Python
+5. **`ament_cmake`** - Interfaz (acción personalizada)
+6. **`ament_cmake`** - Nodo C++
+7. **`ament_python`** - Launch file Python
+
+**Regla general:**
+- Nodos y scripts Python → `ament_python`
+- Interfaces (msg/srv/action) → `ament_cmake` (aunque uses Python)
+- Nodos C++ → `ament_cmake`
+
+</details>
+
+---
+
 #### Ejercicio 5.1: Estructurar paquete completo
 ```bash
 cd ~/ros2_ws/src/mis_ejercicios

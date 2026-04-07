@@ -81,6 +81,275 @@ printenv | grep -i ROS
 
 ---
 
+## Tipos de Paquetes en ROS2
+
+### Build Types disponibles
+
+ROS2 soporta diferentes sistemas de build según el lenguaje:
+
+| Build Type | Lenguaje | Uso Principal |
+|------------|----------|---------------|
+| `ament_python` | Python | Nodos y scripts Python |
+| `ament_cmake` | C++ | Nodos C++, interfaces personalizadas |
+
+### Cuándo usar cada tipo
+
+**Usa `ament_python` cuando:**
+- Escribes nodos en Python con rclpy
+- Creas scripts de automatización
+- Desarrollas launch files en Python
+- Eres principiante en ROS2
+
+**Usa `ament_cmake` cuando:**
+- Escribes nodos en C++ con rclcpp
+- Creas interfaces personalizadas (msg, srv, action) ← **Aunque uses Python**
+- Necesitas máximo rendimiento
+- Integras código C/C++ existente
+
+> ⚠️ **Importante:** Aunque tus nodos estén en Python, las interfaces personalizadas (mensajes, servicios, acciones) DEBEN ser paquetes `ament_cmake` porque ROS2 genera código C++ automáticamente para comunicación eficiente.
+
+---
+
+## Crear Paquete Python (Recomendado para este curso)
+
+### Comando de creación
+
+```bash
+cd ~/ros2_ws/src
+ros2 pkg create --build-type ament_python mi_paquete_python
+```
+
+### Estructura generada
+
+```
+mi_paquete_python/
+├── mi_paquete_python/
+│   └── __init__.py
+├── resource/
+│   └── mi_paquete_python
+├── test/
+│   ├── test_copyright.py
+│   ├── test_flake8.py
+│   └── test_pep257.py
+├── package.xml
+├── setup.py
+└── setup.cfg
+```
+
+### Archivos principales
+
+**package.xml** - Metadatos del paquete:
+```xml
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>mi_paquete_python</name>
+  <version>0.0.1</version>
+  <description>Mi paquete Python de ROS2</description>
+  <maintainer email="usuario@email.com">Usuario</maintainer>
+  <license>MIT</license>
+  
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
+```
+
+**setup.py** - Configuración de Python:
+```python
+from setuptools import setup
+
+package_name = 'mi_paquete_python'
+
+setup(
+    name=package_name,
+    version='0.0.1',
+    packages=[package_name],
+    data_files=[
+        ('share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+    ],
+    install_requires=['setuptools'],
+    zip_safe=True,
+    maintainer='Usuario',
+    maintainer_email='usuario@email.com',
+    description='Mi paquete Python de ROS2',
+    license='MIT',
+    tests_require=['pytest'],
+    entry_points={
+        'console_scripts': [
+            'mi_nodo = mi_paquete_python.mi_nodo:main',
+        ],
+    },
+)
+```
+
+**Añadir nodo Python:**
+
+Crear `mi_paquete_python/mi_paquete_python/mi_nodo.py`:
+```python
+#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+
+class MiNodo(Node):
+    def __init__(self):
+        super().__init__('mi_nodo')
+        self.get_logger().info('¡Hola desde Python!')
+
+def main(args=None):
+    rclpy.init(args=args)
+    nodo = MiNodo()
+    rclpy.spin(nodo)
+    nodo.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+Compilar y ejecutar:
+```bash
+cd ~/ros2_ws
+colcon build --packages-select mi_paquete_python
+source install/setup.bash
+ros2 run mi_paquete_python mi_nodo
+```
+
+---
+
+## Crear Paquete C++ (Referencia)
+
+> 💡 **Nota:** Este curso se centra en Python con rclpy. Esta sección es solo para referencia si necesitas trabajar con C++.
+
+### Comando de creación
+
+```bash
+cd ~/ros2_ws/src
+ros2 pkg create --build-type ament_cmake mi_paquete_cpp
+```
+
+### Estructura generada
+
+```
+mi_paquete_cpp/
+├── include/
+│   └── mi_paquete_cpp/
+│       └── mi_paquete_cpp.hpp
+├── src/
+│   └── mi_nodo.cpp
+├── test/
+├── CMakeLists.txt
+└── package.xml
+```
+
+### Archivos principales
+
+**CMakeLists.txt** - Sistema de build:
+```cmake
+cmake_minimum_required(VERSION 3.8)
+project(mi_paquete_cpp)
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+
+add_executable(mi_nodo src/mi_nodo.cpp)
+ament_target_dependencies(mi_nodo rclcpp std_msgs)
+
+install(TARGETS
+  mi_nodo
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+ament_package()
+```
+
+**package.xml**:
+```xml
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>mi_paquete_cpp</name>
+  <version>0.0.1</version>
+  <description>Mi paquete C++ de ROS2</description>
+  <maintainer email="usuario@email.com">Usuario</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
+```
+
+**Nodo C++ ejemplo** (`src/mi_nodo.cpp`):
+```cpp
+#include <rclcpp/rclcpp.hpp>
+
+class MiNodo : public rclcpp::Node
+{
+public:
+    MiNodo() : Node("mi_nodo")
+    {
+        RCLCPP_INFO(this->get_logger(), "¡Hola desde C++!");
+    }
+};
+
+int main(int argc, char **argv)
+{
+    rclcpp::init(argc, argv);
+    auto nodo = std::make_shared<MiNodo>();
+    rclcpp::spin(nodo);
+    rclcpp::shutdown();
+    return 0;
+}
+```
+
+Compilar y ejecutar:
+```bash
+cd ~/ros2_ws
+colcon build --packages-select mi_paquete_cpp
+source install/setup.bash
+ros2 run mi_paquete_cpp mi_nodo
+```
+
+---
+
+## Comparativa Rápida
+
+| Aspecto | Python (rclpy) | C++ (rclcpp) |
+|---------|----------------|--------------|
+| Facilidad | ✅ Más fácil | ❌ Más complejo |
+| Velocidad desarrollo | ✅ Rápido | ❌ Más lento |
+| Rendimiento runtime | ❌ Menor | ✅ Mayor |
+| Gestión memoria | ✅ Automática (GC) | ❌ Manual |
+| Ideal para | Prototipos, scripts | Producción, tiempo real |
+| Curva aprendizaje | ✅ Suave | ❌ Empinada |
+
+> 🎯 **Recomendación para este curso:** Usa Python (`ament_python`) para todos tus nodos. Solo necesitarás `ament_cmake` cuando crees interfaces personalizadas.
+
+---
+
 ## Conceptos Fundamentales
 
 ### Arquitectura de ROS2

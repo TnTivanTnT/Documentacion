@@ -451,8 +451,24 @@ ros2_ws/
     │   ├── paquete_1/
     │   │   └── __init__.py
     │   └── resource/
-    └── paquete_2/
+     └── paquete_2/
 ```
+
+### Elegir tipo de paquete
+
+Antes de crear un paquete, decide el build type:
+
+| Quiero crear... | Build type |
+|-----------------|------------|
+| Nodos en Python | `ament_python` |
+| Nodos en C++ | `ament_cmake` |
+| Interfaces (msg/srv/action) | `ament_cmake` |
+| Librería C++ | `ament_cmake` |
+
+> 💡 **Flujo típico con Python:**
+> 1. Paquete de interfaces: `ament_cmake` (para msg/srv/action)
+> 2. Paquete de nodos: `ament_python` (para tus nodos Python)
+> 3. Ambos paquetes conviven en el mismo workspace
 
 ### Crear un paquete Python
 

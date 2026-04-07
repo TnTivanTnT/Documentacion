@@ -13,7 +13,52 @@
 
 ## Interfaces Personalizadas
 
-### Crear mensajes personalizados (msg)
+> ⚠️ **Importante - Interfaces vs Nodos:** Aunque desarrolles todos tus nodos en Python, los paquetes de interfaces personalizadas (mensajes, servicios, acciones) DEBEN ser `ament_cmake`.
+
+### ¿Por qué ament_cmake para interfaces?
+
+Las interfaces personalizadas requieren `ament_cmake` porque:
+
+1. **Generación de código:** ROS2 genera código C++ automáticamente desde las definiciones `.msg`, `.srv`, `.action`
+2. **Eficiencia:** El middleware DDS usa este código C++ para comunicación eficiente
+3. **Compatibilidad:** Las interfaces pueden ser usadas tanto por nodos Python como C++
+4. **Build time:** Las interfaces se compilan una vez y se instalan en el sistema
+
+### Flujo de trabajo recomendado
+
+```
+Workspace ROS2
+├── mis_interfaces/          ← ament_cmake (msg/srv/action)
+│   ├── msg/
+│   │   └── RobotStatus.msg
+│   ├── srv/
+│   │   └── CalcularRuta.srv
+│   ├── action/
+│   │   └── Navegar.action
+│   ├── CMakeLists.txt
+│   └── package.xml
+│
+└── mi_robot/                ← ament_python (nodos)
+    ├── mi_robot/
+    │   ├── nodo_control.py
+    │   └── nodo_sensor.py
+    ├── package.xml
+    └── setup.py
+```
+
+### Proceso completo
+
+1. **Crear paquete de interfaces** (`ament_cmake`)
+2. **Definir interfaces** (archivos .msg, .srv, .action)
+3. **Configurar CMakeLists.txt** para generar código
+4. **Compilar** el paquete de interfaces
+5. **Usar en nodos Python** importando las interfaces generadas
+
+> 💡 **Tip:** Compila primero el paquete de interfaces antes que el paquete de nodos. Los nodos Python dependerán de las interfaces generadas.
+
+---
+
+### Crear paquete de interfaces
 
 ### Estructura del paquete de interfaces
 
