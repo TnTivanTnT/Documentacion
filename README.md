@@ -7,48 +7,48 @@ Este índice organiza toda la documentación técnica para nuevos integrantes de
 ## Linux
 
 ### Guías
-- [[Documentacion/Linux/Guia_Linux_Principiante|Guía Linux - Principiante]]
-- [[Documentacion/Linux/Guia_Linux_Intermedio|Guía Linux - Intermedio]]
-- [[Documentacion/Linux/Guia_Linux_Avanzado|Guía Linux - Avanzado]]
+- [Guía Linux - Principiante](./Linux/Guia_Linux_Principiante.md)
+- [Guía Linux - Intermedio](./Linux/Guia_Linux_Intermedio.md)
+- [Guía Linux - Avanzado](./Linux/Guia_Linux_Avanzado.md)
 
 ### Ejercicios Prácticos
-- [[Documentacion/Linux/Ejercicios_Linux|Ejercicios Prácticos Linux]]
+- [Ejercicios Prácticos Linux](./Linux/Ejercicios_Linux.md)
 
 ---
 
 ## ROS2 (Humble + rclpy)
 
 ### Guías
-- [[Documentacion/Ros2/Guia_ROS2_Principiante|Guía ROS2 - Principiante]]
-- [[Documentacion/Ros2/Guia_ROS2_Intermedio|Guía ROS2 - Intermedio]]
-- [[Documentacion/Ros2/Guia_ROS2_Avanzado|Guía ROS2 - Avanzado]]
+- [Guía ROS2 - Principiante](./Ros2/Guia_ROS2_Principiante.md)
+- [Guía ROS2 - Intermedio](./Ros2/Guia_ROS2_Intermedio.md)
+- [Guía ROS2 - Avanzado](./Ros2/Guia_ROS2_Avanzado.md)
 
 ### Ejercicios Prácticos
-- [[Documentacion/Ros2/Ejercicios_ROS2|Ejercicios Prácticos ROS2]]
+- [Ejercicios Prácticos ROS2](./Ros2/Ejercicios_ROS2.md)
 
 ---
 
 ## GitHub
 
 ### Guías
-- [[Documentacion/GitHub/Guia_GitHub_Principiante|Guía GitHub - Principiante]]
-- [[Documentacion/GitHub/Guia_GitHub_Intermedio|Guía GitHub - Intermedio]]
-- [[Documentacion/GitHub/Guia_GitHub_Avanzado|Guía GitHub - Avanzado]]
+- [Guía GitHub - Principiante](./GitHub/Guia_GitHub_Principiante.md)
+- [Guía GitHub - Intermedio](./GitHub/Guia_GitHub_Intermedio.md)
+- [Guía GitHub - Avanzado](./GitHub/Guia_GitHub_Avanzado.md)
 
 ### Ejercicios Prácticos
-- [[Documentacion/GitHub/Ejercicios_GitHub|Ejercicios Prácticos GitHub]]
+- [Ejercicios Prácticos GitHub](./GitHub/Ejercicios_GitHub.md)
 
 ---
 
 ## Markdown
 
 ### Guías
-- [[Documentacion/Markdown/Guia_Markdown_Principiante|Guía Markdown - Principiante]]
-- [[Documentacion/Markdown/Guia_Markdown_Intermedio|Guía Markdown - Intermedio]]
-- [[Documentacion/Markdown/Guia_Markdown_Avanzado|Guía Markdown - Avanzado]]
+- [Guía Markdown - Principiante](./Markdown/Guia_Markdown_Principiante.md)
+- [Guía Markdown - Intermedio](./Markdown/Guia_Markdown_Intermedio.md)
+- [Guía Markdown - Avanzado](./Markdown/Guia_Markdown_Avanzado.md)
 
 ### Ejercicios Prácticos
-- [[Documentacion/Markdown/Ejercicios_Markdown|Ejercicios Prácticos Markdown]]
+- [Ejercicios Prácticos Markdown](./Markdown/Ejercicios_Markdown.md)
 
 ---
 
@@ -73,4 +73,4 @@ Este índice organiza toda la documentación técnica para nuevos integrantes de
 
 ## Proyectos Relacionados
 
-Para ver los proyectos del equipo, ir a [[Índice Proyectos]]
+Para ver los proyectos del equipo, ir a [Índice Proyectos](../Proyectos/Índice%20Proyectos.md)
