@@ -1,6 +1,7 @@
 # Fase 1: Modelado y Entorno en Ignition Gazebo
 
 > 📚 [Volver al Índice de Documentación](../README.md)
+> ⚠️ **Aviso:** Antes de empezar esta fase, asegúrate de haber completado la **[Fase 0: Inicio del Proyecto](Fase_0_Inicio_del_Proyecto.md)** para tener la estructura de carpetas lista.
 
 ## Introducción a Ignition Gazebo (Fortress)
 

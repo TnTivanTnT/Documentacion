@@ -32,6 +32,7 @@ Este repositorio contiene resúmenes técnicos y guías de repaso sobre diversas
 ## Gazebo (Ignition Fortress)
 
 ### Guías del Robot Diferencial
+- [Fase 0: Inicio del Proyecto](./Gazebo/Fase_0_Inicio_del_Proyecto.md)
 - [Fase 1: Modelado y Entorno](./Gazebo/Fase_1_Modelado_y_Entorno.md)
 - [Fase 2: Teleoperación y Bridge](./Gazebo/Fase_2_Teleoperacion_y_Bridge.md)
 - [Fase 3: Sensores y Percepción](./Gazebo/Fase_3_Sensores_y_Percepcion.md)
