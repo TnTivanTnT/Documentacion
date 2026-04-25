@@ -84,7 +84,11 @@ Abre el visualizador y configúralo así:
 1.  Ejecuta `rviz2`.
 2.  **Fixed Frame:** Cámbialo a `base_link` (escribe el nombre a mano si no sale).
 3.  **Añadir Láser:** Dale a **Add** -> **By topic** -> selecciona **/scan**.
-4.  **Añadir Robot:** Dale a **Add** -> **By display type** -> selecciona **RobotModel**.
+4.  **Añadir Robot:**
+    - Dale a **Add** -> **By display type** -> selecciona **RobotModel**.
+    - En la configuración de **RobotModel** (izquierda), busca **Description Topic** y escribe: `/robot_description`.
+    - Asegúrate de que **Description Source** esté en `Topic`.
+
 
 ---
 

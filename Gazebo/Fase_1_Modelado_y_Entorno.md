@@ -3,31 +3,9 @@
 > 📚 [Volver al Índice de Documentación](../README.md)
 > ⚠️ **Aviso:** Antes de empezar esta fase, asegúrate de haber completado la **[Fase 0: Inicio del Proyecto](Fase_0_Inicio_del_Proyecto.md)** para tener la estructura de carpetas lista.
 
-## Introducción a Ignition Gazebo (Fortress)
+## 1. El Robot Diferencial en URDF
 
-Ignition Gazebo 6 es el sucesor de Gazebo "Classic". Es más modular y requiere el `ros_gz_bridge` para hablar con ROS 2.
-
----
-
-## 1. Estructura del Paquete
-
-Asegúrate de estar en tu carpeta de paquete (`mi_robot_sim/`) y verifica las subcarpetas:
-`description/`, `worlds/`, `launch/`, `config/`, `meshes/`.
-
----
-
-## 2. Creando el Robot en URDF
-
-El URDF describe la física del robot mediante **Links** (piezas) y **Joints** (uniones).
-
-### Estructura básica: Link
-Cada pieza tiene tres bloques fundamentales:
-- **Visual:** Lo que vemos en la simulación.
-- **Collision:** Fronteras para choques.
-- **Inertial:** Masa y distribución (¡Vital para la física!).
-
-### Ejemplo: Robot Diferencial Completo (Lógica desde el suelo)
-Crea el archivo `description/robot.urdf`. Usaremos coordenadas positivas para que el robot se construya sobre el suelo:
+Crea el archivo **`description/robot.urdf`** y pega este código completo. Es un robot funcional con 3 apoyos (2 ruedas motrices y 1 loca) diseñado desde el suelo hacia arriba.
 
 ```xml
 <?xml version="1.0"?>
@@ -36,7 +14,7 @@ Crea el archivo `description/robot.urdf`. Usaremos coordenadas positivas para qu
   <!-- LINK DE ORIGEN (En el suelo, entre las ruedas) -->
   <link name="base_link"></link>
 
-  <!-- CHASIS (Elevado para que el eje esté a 0.1m del suelo) -->
+  <!-- CHASIS -->
   <link name="chassis">
     <visual>
       <geometry><box size="0.4 0.3 0.1"/></geometry>
@@ -53,7 +31,7 @@ Crea el archivo `description/robot.urdf`. Usaremos coordenadas positivas para qu
 
   <joint name="chassis_joint" type="fixed">
     <parent link="base_link"/><child link="chassis"/>
-    <origin xyz="0 0 0.1"/> <!-- El centro del chasis está a 10cm del suelo -->
+    <origin xyz="0 0 0.1"/>
   </joint>
 
   <!-- RUEDA IZQUIERDA -->
@@ -72,7 +50,7 @@ Crea el archivo `description/robot.urdf`. Usaremos coordenadas positivas para qu
 
   <joint name="left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="left_wheel"/>
-    <origin xyz="0 0.175 0.1" rpy="-1.57 0 0"/> <!-- Z=0.1 (Radio de la rueda) -->
+    <origin xyz="0 0.175 0.1" rpy="-1.57 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
@@ -92,7 +70,7 @@ Crea el archivo `description/robot.urdf`. Usaremos coordenadas positivas para qu
 
   <joint name="right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="right_wheel"/>
-    <origin xyz="0 -0.175 0.1" rpy="-1.57 0 0"/> <!-- Z=0.1 (Radio de la rueda) -->
+    <origin xyz="0 -0.175 0.1" rpy="-1.57 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
@@ -112,10 +90,10 @@ Crea el archivo `description/robot.urdf`. Usaremos coordenadas positivas para qu
 
   <joint name="caster_wheel_joint" type="fixed">
     <parent link="base_link"/><child link="caster_wheel"/>
-    <origin xyz="0.15 0 0.05" rpy="0 0 0"/> <!-- Z=0.05 (Radio de la esfera) -->
+    <origin xyz="0.15 0 0.05" rpy="0 0 0"/>
   </joint>
 
-  <!-- PLUGIN DE CONTROL -->
+  <!-- PLUGIN DE CONTROL (Diff Drive) -->
   <gazebo>
     <plugin filename="ignition-gazebo-diff-drive-system" name="ignition::gazebo::systems::DiffDrive">
       <left_joint>left_wheel_joint</left_joint>
@@ -128,34 +106,12 @@ Crea el archivo `description/robot.urdf`. Usaremos coordenadas positivas para qu
 
 </robot>
 ```
-</robot>
-```
 
 ---
 
-## 3. Uso de Modelos 3D (Meshes)
+## 2. El Escenario (World)
 
-Si quieres que tu robot se vea como el diseño real de SolidWorks en lugar de cajas azules:
-
-### Reemplazar Geometría por Mesh
-Dentro de la etiqueta `<visual>`, cambia `<box/>` o `<cylinder/>` por `<mesh/>`:
-
-```xml
-<visual>
-  <geometry>
-    <!-- package://nombre_paquete/ruta/al/archivo -->
-    <mesh filename="package://mi_robot_sim/meshes/chasis.dae" scale="0.001 0.001 0.001"/>
-  </geometry>
-</visual>
-```
-
-> ⚠️ **Recuerda:** Mantén la etiqueta `<collision>` con formas simples (`box`, `cylinder`) aunque la parte `<visual>` use un modelo 3D complejo. Esto hará que la simulación sea fluida.
-
----
-
-## 4. El Escenario (World)
-
-Elescenario es un archivo `.sdf`. Crea `worlds/mi_mundo.sdf`:
+Crea **`worlds/mi_mundo.sdf`**:
 
 ```xml
 <?xml version="1.0" ?>
@@ -186,16 +142,15 @@ Elescenario es un archivo `.sdf`. Crea `worlds/mi_mundo.sdf`:
 
 ---
 
-## 5. Lanzamiento de la Simulación
+## 3. Lanzamiento
 
-Para ver tu mundo vacío:
+1. Abre Gazebo con el mundo:
 ```bash
 ign gazebo worlds/mi_mundo.sdf
 ```
 
-Para insertar tu robot URDF en el mundo:
+2. En otra terminal, inserta el robot (pulsa Play en Gazebo antes):
 ```bash
-# Spawneamos el robot con un margen mínimo sobre el suelo (-z 0.01)
 ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot -z 0.01
 ```
 
@@ -203,4 +158,4 @@ ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot -z 0.01
 
 ## Siguientes Pasos
 
-Continúa con la **[Fase 2: Teleoperación y Bridge](Fase_2_Teleoperacion_y_Bridge.md)** para conectar ROS 2 con la simulación y empezar a mover tu robot.
+Continúa con la **[Fase 2: Teleoperación y Bridge](Fase_2_Teleoperacion_y_Bridge.md)**.
