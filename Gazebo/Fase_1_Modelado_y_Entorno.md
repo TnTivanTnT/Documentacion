@@ -26,14 +26,14 @@ Cada pieza tiene tres bloques fundamentales:
 - **Collision:** Fronteras para choques.
 - **Inertial:** Masa y distribución (¡Vital para la física!).
 
-### Ejemplo: Robot Diferencial Simple
-Crea el archivo `description/robot.urdf` y pega este código:
+### Ejemplo: Robot Diferencial Completo (3 ruedas)
+Crea el archivo `description/robot.urdf` y pega este código (Chasis + 2 Ruedas + 1 Rueda Loca):
 
 ```xml
 <?xml version="1.0"?>
 <robot name="mi_robot">
 
-  <!-- Link principal (Chasis) -->
+  <!-- CHASIS (Cuerpo principal) -->
   <link name="base_link">
     <visual>
       <geometry><box size="0.4 0.3 0.1"/></geometry>
@@ -48,34 +48,70 @@ Crea el archivo `description/robot.urdf` y pega este código:
     </inertial>
   </link>
 
-  <!-- Rueda Izquierda -->
+  <!-- RUEDA IZQUIERDA -->
   <link name="left_wheel">
     <visual>
       <geometry><cylinder radius="0.1" length="0.05"/></geometry>
     </visual>
+    <collision>
+      <geometry><cylinder radius="0.1" length="0.05"/></geometry>
+    </collision>
     <inertial>
       <mass value="0.2"/>
       <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
     </inertial>
   </link>
 
-  <!-- Unión de la rueda -->
   <joint name="left_wheel_joint" type="continuous">
-    <parent link="base_link"/>
-    <child link="left_wheel"/>
+    <parent link="base_link"/><child link="left_wheel"/>
     <origin xyz="0 0.175 0" rpy="-1.57 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
 
-  <!-- Rueda Derecha (Ejercicio: intenta añadirla tú siguiendo la izquierda) -->
+  <!-- RUEDA DERECHA -->
+  <link name="right_wheel">
+    <visual>
+      <geometry><cylinder radius="0.1" length="0.05"/></geometry>
+    </visual>
+    <collision>
+      <geometry><cylinder radius="0.1" length="0.05"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.2"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+    </inertial>
+  </link>
 
-  <!-- Plugin de Control (Diff Drive) -->
+  <joint name="right_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="right_wheel"/>
+    <origin xyz="0 -0.175 0" rpy="-1.57 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- RUEDA LOCA (CASTER WHEEL) - Delantera para equilibrio -->
+  <link name="caster_wheel">
+    <visual>
+      <geometry><sphere radius="0.05"/></geometry>
+    </visual>
+    <collision>
+      <geometry><sphere radius="0.05"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
+    </inertial>
+  </link>
+
+  <joint name="caster_wheel_joint" type="fixed">
+    <parent link="base_link"/><child link="caster_wheel"/>
+    <origin xyz="0.15 0 -0.05" rpy="0 0 0"/>
+  </joint>
+
+  <!-- PLUGIN DE CONTROL -->
   <gazebo>
-    <plugin
-      filename="ignition-gazebo-diff-drive-system"
-      name="ignition::gazebo::systems::DiffDrive">
+    <plugin filename="ignition-gazebo-diff-drive-system" name="ignition::gazebo::systems::DiffDrive">
       <left_joint>left_wheel_joint</left_joint>
-      <!-- Asegúrate de añadir el joint de la derecha cuando lo crees -->
+      <right_joint>right_wheel_joint</right_joint>
       <wheel_separation>0.35</wheel_separation>
       <wheel_radius>0.1</wheel_radius>
       <topic>cmd_vel</topic>
@@ -87,13 +123,23 @@ Crea el archivo `description/robot.urdf` y pega este código:
 
 ---
 
-## 3. Importación de Modelos desde CAD (SolidWorks, etc.)
+## 3. Uso de Modelos 3D (Meshes)
 
-Si tienes un diseño en SolidWorks, puedes exportar tus piezas como archivos `.dae` (Collada) o `.stl`.
+Si quieres que tu robot se vea como el diseño real de SolidWorks en lugar de cajas azules:
 
-- **Visual:** Usa el `.dae` detallado.
-- **Collision:** Usa formas simples (box, cylinder) para no saturar el motor de física.
-- **Escalado:** Recuerda usar `scale="0.001 0.001 0.001"` si tu CAD está en milímetros.
+### Reemplazar Geometría por Mesh
+Dentro de la etiqueta `<visual>`, cambia `<box/>` o `<cylinder/>` por `<mesh/>`:
+
+```xml
+<visual>
+  <geometry>
+    <!-- package://nombre_paquete/ruta/al/archivo -->
+    <mesh filename="package://mi_robot_sim/meshes/chasis.dae" scale="0.001 0.001 0.001"/>
+  </geometry>
+</visual>
+```
+
+> ⚠️ **Recuerda:** Mantén la etiqueta `<collision>` con formas simples (`box`, `cylinder`) aunque la parte `<visual>` use un modelo 3D complejo. Esto hará que la simulación sea fluida.
 
 ---
 
