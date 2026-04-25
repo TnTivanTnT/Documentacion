@@ -2,15 +2,11 @@
 
 > 📚 [Volver al Índice de Documentación](../README.md)
 
-En esta fase daremos un sensor LiDAR al robot para que detecte obstáculos. Esto permitirá que el robot pase de ser "ciego" a tener una representación de lo que le rodea.
-
-> ⚠️ **IMPORTANTE:** Asegúrate de haber actualizado tu archivo de mundo (**`worlds/mi_mundo.sdf`**) con el plugin de sensores como se indica en la [Fase 1](Fase_1_Modelado_y_Entorno.md).
-
 ---
 
-## 1. Integración del LiDAR en el URDF
+## 1. URDF Completo y Definitivo
 
-Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el chasis, las ruedas motrices, la rueda loca de apoyo y el sensor LiDAR.
+Sobrescribe tu archivo **`description/robot.urdf`** con esta versión. He mejorado los plugins para asegurar que RViz2 reciba la posición exacta de cada pieza:
 
 ```xml
 <?xml version="1.0"?>
@@ -43,7 +39,7 @@ Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el
   </link>
   <joint name="right_wheel_joint" type="continuous"><parent link="base_link"/><child link="right_wheel"/><origin xyz="0 -0.175 0.1" rpy="-1.57 0 0"/><axis xyz="0 0 1"/></joint>
 
-  <!-- RUEDA LOCA (Apoyo delantero) -->
+  <!-- RUEDA LOCA -->
   <link name="caster_wheel">
     <visual><geometry><sphere radius="0.05"/></geometry></visual>
     <collision><geometry><sphere radius="0.05"/></geometry></collision>
@@ -51,7 +47,7 @@ Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el
   </link>
   <joint name="caster_wheel_joint" type="fixed"><parent link="base_link"/><child link="caster_wheel"/><origin xyz="0.15 0 0.05"/></joint>
 
-  <!-- LIDAR (El "ojo" del robot) -->
+  <!-- LIDAR -->
   <link name="lidar_link">
     <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="red"><color rgba="1 0 0 1"/></material></visual>
     <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
@@ -59,9 +55,8 @@ Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el
   </link>
   <joint name="lidar_joint" type="fixed"><parent link="chassis"/><child link="lidar_link"/><origin xyz="0.1 0 0.08"/></joint>
 
-  <!-- PLUGINS DE GAZEBO -->
+  <!-- PLUGINS DE CONTROL Y TELEMETRÍA -->
   <gazebo>
-    <!-- Plugin de Movimiento -->
     <plugin filename="ignition-gazebo-diff-drive-system" name="ignition::gazebo::systems::DiffDrive">
       <left_joint>left_wheel_joint</left_joint>
       <right_joint>right_wheel_joint</right_joint>
@@ -69,11 +64,21 @@ Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el
       <wheel_radius>0.1</wheel_radius>
       <topic>cmd_vel</topic>
     </plugin>
-    <!-- Plugin de Telemetría (Publica la posición de las ruedas) -->
-    <plugin filename="ignition-gazebo-joint-state-publisher-system" name="ignition::gazebo::systems::JointStatePublisher"></plugin>
+
+    <!-- Publicador de estado de las juntas (Ruedas) -->
+    <plugin filename="ignition-gazebo-joint-state-publisher-system" name="ignition::gazebo::systems::JointStatePublisher">
+        <joint_name>left_wheel_joint</joint_name>
+        <joint_name>right_wheel_joint</joint_name>
+    </plugin>
+
+    <!-- Publicador de posiciones (TFs automáticas) -->
+    <plugin filename="ignition-gazebo-pose-publisher-system" name="ignition::gazebo::systems::PosePublisher">
+        <publish_link_pose>true</publish_link_pose>
+        <use_static_tf_publisher>true</use_static_tf_publisher>
+    </plugin>
   </gazebo>
 
-  <!-- Configuración del Sensor Láser -->
+  <!-- Sensor LiDAR -->
   <gazebo reference="lidar_link">
     <sensor name="gpu_lidar" type="gpu_lidar">
       <pose>0 0 0 0 0 0</pose>
@@ -93,63 +98,48 @@ Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el
 
 ---
 
-## 2. Ejecución Completa (Paso a Paso)
+## 2. Ejecución Completa (Bulletproof)
 
-Para que el robot sea visible y funcional en Gazebo y RViz2, abre 5 terminales siguiendo este orden exacto:
+Abre las terminales en este orden. He simplificado el puente para que sea más robusto:
 
 ### Terminal 1: Gazebo
 ```bash
 ign gazebo worlds/mi_mundo.sdf
 ```
-*Haz clic en **Play** inmediatamente.*
+*Dale al **Play**.*
 
-### Terminal 2: Spawn del Robot
+### Terminal 2: Spawn
 ```bash
 ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot -z 0.01
 ```
 
-### Terminal 3: El Puente (Bridge)
-Traduce el movimiento, el láser y las articulaciones.
+### Terminal 3: El Puente
 ```bash
 ros2 run ros_gz_bridge parameter_bridge \
   /cmd_vel@geometry_msgs/msg/Twist@ignition.msgs.Twist \
   /scan@sensor_msgs/msg/LaserScan@ignition.msgs.LaserScan \
-  /model/mi_robot/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model
+  /model/mi_robot/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model \
+  /model/mi_robot/pose@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V
 ```
 
-### Terminal 4: Publicador de Estado (Robot State Publisher)
-**CRUCIAL:** Usa `use_sim_time:=True` para que las ruedas no se junten en el centro.
+### Terminal 4: Robot State Publisher
 ```bash
 ros2 run robot_state_publisher robot_state_publisher --ros-args \
   -p robot_description:="$(cat description/robot.urdf)" \
-  -p use_sim_time:=True \
-  -r /joint_states:=/model/mi_robot/joint_state
+  -p use_sim_time:=True
 ```
 
-### Terminal 5: Visualizador RViz2
+### Terminal 5: RViz2
 ```bash
 ros2 run rviz2 rviz2 --ros-args -p use_sim_time:=True
 ```
-**Pasos en RViz:**
-1.  **Fixed Frame:** Cambiar a `base_link`.
-2.  **Add -> By topic -> /scan**.
-3.  **Add -> By display type -> RobotModel**.
-    - Configurar **Description Topic** a `/robot_description` y **Source** a `Topic`.
 
 ---
 
-## 3. Lógica de Detección de Obstáculos
-
-Un pequeño programa Python puede leer el topic `/scan` para evitar choques:
-
-```python
-def scan_callback(self, msg):
-    # La distancia justo delante es el centro de la lista de rangos
-    distancia_frontal = msg.ranges[len(msg.ranges)//2]
-
-    if distancia_frontal < 0.5:
-        self.get_logger().warn("¡OBSTÁCULO DETECTADO! Frenando...")
-```
+## 3. Verificación Final en RViz2
+Si las ruedas siguen saliendo mal:
+1.  En la Terminal 4, mira si salen errores de "Joint not found".
+2.  En una terminal nueva, escribe `ros2 topic echo /joint_states` y verifica que aparecen los nombres `left_wheel_joint` y `right_wheel_joint`.
 
 ---
 
