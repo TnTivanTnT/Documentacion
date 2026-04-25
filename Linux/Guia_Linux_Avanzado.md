@@ -344,17 +344,19 @@ source ~/.bashrc
 | Comando | Descripción |
 |---------|-------------|
 | `top` | Procesos y uso de recursos |
-| `htop` | Monitor interactivo mejorado |
+| `btop` | Monitor interactivo moderno y visual |
 | `nload` | Ver tráfico de red gráfico |
 | `free -h` | Memoria disponible |
 
-### El poder de htop
+### El poder de btop
 
-Dentro de `htop`, puedes usar estas teclas:
-- **`F6`**: Cambiar el criterio de ordenación (ej: por % de Memoria).
-- **`F9`**: Matar un proceso seleccionado.
-- **`F10`**: Salir.
-- **`/`**: Buscar un proceso por nombre.
+`btop` es un monitor de recursos mucho más visual e intuitivo que el clásico `top`.
+
+Dentro de `btop`, puedes usar estas teclas:
+- **`m`**: Cambiar el modo de visualización de memoria.
+- **`b`**: Cambiar el modo de visualización de red.
+- **`Esc`**: Abrir el menú de configuración y ayuda.
+- **`q`**: Salir.
 
 ### Monitorización de Red (nload)
 Si el video del robot llega con retraso, ejecuta `nload`. Verás barras gráficas de entrada y salida de datos en tiempo real para cada interfaz (WLAN, ETH).

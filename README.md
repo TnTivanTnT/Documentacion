@@ -68,7 +68,7 @@ Este repositorio contiene resúmenes técnicos y guías de repaso sobre diversas
 
 | Área | Herramientas Clave |
 |------|-------|
-| Linux | `sudo`, `tmux`, `ssh`, `htop`, `grep` |
+| Linux | `sudo`, `tmux`, `ssh`, `btop`, `grep` |
 | ROS2 | `rclpy`, `colcon`, `rviz2`, `ros_gz_bridge` |
 | GitHub | `switch`, `restore`, `PRs`, `Actions` |
 | Markdown | `Mermaid`, `Badges`, `Obsidian` |

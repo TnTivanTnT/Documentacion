@@ -157,7 +157,7 @@ cat archivo.csv | awk -F, '{print $1, $3}'
 | `ps aux` | Todos los procesos con detalles |
 | `ps aux | grep nombre` | Busca proceso específico |
 | `top` | Monitor interactivo |
-| `htop` | Monitor mejorado (requiere instalación) |
+| `btop` | Monitor mejorado (requiere instalación) |
 | `pgrep nombre` | Obtiene PID por nombre |
 
 ### Columnas de ps aux
