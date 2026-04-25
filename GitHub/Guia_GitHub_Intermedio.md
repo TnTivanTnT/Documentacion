@@ -5,9 +5,9 @@
 ## Índice
 - [Branching](#branching)
 - [Merging](#merging)
-- [Pull Requests](#pull-requests)
+- [Pull Requests (Web)](#pull-requests)
 - [Resolución de Conflictos](#resolución-de-conflictos)
-- [Trabajo Colaborativo](#trabajo-colaborativo)
+- [Flujo de Trabajo y Buenas Prácticas](#flujo-de-trabajo-y-buenas-prácticas)
 
 ---
 
@@ -47,24 +47,6 @@ git merge feature/nueva-funcionalidad
 git branch -d feature/nueva-funcionalidad
 ```
 
-### Nomenclatura de branches
-
-| Prefijo | Uso |
-|---------|-----|
-| `feature/` | Nuevas funcionalidades |
-| `bugfix/` | Correcciones de bugs |
-| `hotfix/` | Correcciones urgentes |
-| `release/` | Preparación de release |
-| `docs/` | Documentación |
-
-**Ejemplos:**
-```
-feature/navegacion-autonoma
-bugfix/error-calculo-trayectoria
-hotfix/crash-inicio
-release/v1.0.0
-```
-
 ---
 
 ## Merging
@@ -82,13 +64,6 @@ Merge combina los cambios de dos branches en uno solo.
 | Squash and Merge| Combina todos los commits en uno solo (Limpia el historial) |
 
 ### Fast-forward merge
-
-```bash
-git switch main
-git merge feature/rama
-```
-
-### Three-way merge
 
 ```bash
 git switch main
@@ -114,33 +89,30 @@ git merge --squash feature/rama
 
 ### ¿Qué es un Pull Request?
 
-Un Pull Request (PR) es una propuesta para fusionar cambios de un branch a otro, permitiendo revisión y discusión antes del merge.
+Un Pull Request (PR) es una propuesta para fusionar cambios de un branch a otro, permitiendo revisión y discusión antes del merge final. Aunque Git se usa por terminal, los PRs se gestionan mejor desde la **Interfaz Web de GitHub**.
 
-### Crear Pull Request
+### Flujo recomendado para un PR (Web)
 
-1. Push del branch a GitHub:
-```bash
-git push origin feature/mi-rama
-```
-
-2. En GitHub:
-   - Ir al repositorio
-   - Click en "Compare & pull request"
-   - Seleccionar branches base y compare
-   - Añadir título y descripción
-   - Click en "Create pull request"
-
-### Draft Pull Requests (Borradores)
-
-Si estás trabajando en una funcionalidad larga pero quieres que se vea el progreso sin que se revise todavía:
-1. Al crear el PR en GitHub, haz clic en la flecha junto a "Create Pull Request".
-2. Selecciona **"Create Draft Pull Request"**.
+1.  **Sube tu rama a GitHub:**
+    ```bash
+    git push origin feature/mi-rama
+    ```
+2.  **Abre GitHub en tu navegador:**
+    - Ve a tu repositorio.
+    - Verás un aviso: "feature/mi-rama had recent pushes...". Haz clic en **"Compare & pull request"**.
+    - Si no aparece, ve a la pestaña **"Pull Requests"** y haz clic en **"New pull request"**, selecciona tu rama.
+3.  **Configura el PR:**
+    - Escribe un título claro (siguiendo *Conventional Commits*).
+    - Añade una descripción de tus cambios.
+    - (Opcional) Asigna **Reviewers** o **Labels**.
+4.  **Draft Pull Requests (Borradores):**
+    - Si el trabajo no está terminado, haz clic en la flecha junto a "Create Pull Request" y elige **"Create Draft Pull Request"**. Esto avisa de que estás trabajando pero no está listo para merge.
 
 ### Branch Protection (Protección de Ramas)
 
-Para evitar desastres, el administrador debe configurar reglas en GitHub (`Settings -> Branches -> Add rule`):
-- **Require a pull request before merging:** Nadie puede hacer `push` directo a `main`.
-- **Require status checks to pass:** El código debe compilar antes del merge.
+En la web (`Settings -> Branches -> Add rule`), es vital configurar la rama `main` para:
+- **Require a pull request before merging:** Evita que se suban cambios a `main` por error sin revisión.
+- **Require status checks to pass:** Asegura que el código compile antes de fusionarlo.
 
 ---
 
@@ -150,17 +122,7 @@ Para evitar desastres, el administrador debe configurar reglas en GitHub (`Setti
 
 Ocurre cuando Git no puede fusionar automáticamente porque las mismas líneas fueron modificadas en diferentes ramas.
 
-> 💡 **Tip:** Usa **Visual Studio Code** para resolver conflictos visualmente con botones. ¡Es mucho más seguro!
-
-### Formato del conflicto
-
-```
-<<<<<<< HEAD
-Código del branch actual
-=======
-Código del branch entrante
->>>>>>> feature/rama
-```
+> 💡 **Tip:** Usa **Visual Studio Code** para resolver conflictos visualmente con botones. ¡Es mucho más seguro que hacerlo a mano!
 
 ---
 
@@ -169,10 +131,9 @@ Código del branch entrante
 ### Notas sobre el flujo de trabajo
 
 Para trabajar de forma organizada, es recomendable seguir estas normas:
-1.  **Main es sagrado:** Evitar trabajar directamente sobre `main`. Usar ramas `feature/`.
-2.  **Pull antes de Push:** Hacer un `git pull` antes de empezar y antes de subir cambios para evitar conflictos.
-3.  **PRs pequeños:** Es mejor hacer varios Pull Requests pequeños que uno gigante.
-4.  **Mensajes claros:** Usar el estándar de *Conventional Commits*.
+1.  **Main es sagrado:** Evitar trabajar directamente sobre `main`. Usa ramas `feature/`.
+2.  **Pull antes de Push:** Haz un `git pull` antes de empezar y antes de subir cambios.
+3.  **Mensajes claros:** Usa el estándar de *Conventional Commits*.
 
 ### Fork vs Branch
 
@@ -180,78 +141,43 @@ Para trabajar de forma organizada, es recomendable seguir estas normas:
 |---------|------|--------|
 | Ubicación | Repositorio propio | Mismo repositorio |
 | Permisos | No necesarios | Necesarios |
-| Uso típico | Proyectos open source | Proyectos internos |
+| Uso típico | Proyectos públicos | Proyectos internos |
 
-### Flujo con Fork
+### Flujo con Fork (Web + Terminal)
 
-```bash
-# 1. Fork en GitHub (UI)
-# 2. Clonar tu fork
-git clone https://github.com/tu-usuario/proyecto.git
-# 3. Añadir upstream
-git remote add upstream https://github.com/original/proyecto.git
-# 4. Sincronizar fork
-git fetch upstream
-git switch main
-git merge upstream/main
-git push origin main
-```
-
-### Code Review (Revisión de Código)
-
-Al revisar código, esta es una **Lista de Verificación** útil:
-1.  **Funcionalidad:** ¿El código hace lo que dice que hace?
-2.  **Legibilidad:** ¿Es fácil de entender?
-3.  **Tests:** ¿Hay tests? ¿Pasan todos?
-4.  **Seguridad:** ¿Hay secretos o claves expuestas?
+1.  **Fork:** Haz clic en el botón **"Fork"** en la esquina superior derecha del repositorio original en GitHub.
+2.  **Clonar:** Copia la URL de **tu fork** y clónalo:
+    ```bash
+    git clone https://github.com/tu-usuario/proyecto.git
+    ```
+3.  **Sincronizar (Terminal):** Añade el repositorio original como `upstream`:
+    ```bash
+    git remote add upstream https://github.com/original/proyecto.git
+    git fetch upstream
+    git switch main
+    git merge upstream/main
+    ```
 
 ---
 
-## Estándar: Conventional Commits
+## Organización y Mantenimiento (Web)
 
-Para que el historial sea profesional y legible, se recomienda este formato: `<tipo>: <descripción>`
+### Issues y Planificación
 
-| Tipo | Descripción |
-| :--- | :--- |
-| **feat** | Una nueva funcionalidad |
-| **fix** | Una corrección de un error |
-| **docs** | Cambios en la documentación |
-| **style** | Cambios de formato (espacios, comas) |
-| **refactor**| Mejora de código que no cambia el comportamiento |
-| **test** | Añadir o corregir pruebas |
-| **chore** | Tareas de mantenimiento |
+GitHub ofrece herramientas visuales para organizar el trabajo que son mejores que la terminal para esta tarea:
 
----
+1.  **Issues:** Se usan para reportar errores o proponer funciones. En la web, ve a la pestaña **"Issues" -> "New Issue"**.
+2.  **Milestones (Hitos):** Agrupan issues hacia un objetivo (ej: "Lanzamiento v1.0").
+3.  **GitHub Projects:** Un tablero Kanban (To Do, In Progress, Done). Se gestiona arrastrando tarjetas en la web.
 
-## Organización y Mantenimiento
-
-### Issues
-
-```bash
-gh issue create --title "Bug en navegación" --body "Descripción..."
-gh issue list
-```
-
-### Planificación: Milestones y Projects
-
-1.  **Milestones (Hitos):** Agrupan issues y PRs hacia un objetivo específico.
-2.  **GitHub Projects:** Un tablero Kanban para visualizar el progreso de las tareas.
-
-### Gobernanza: CODEOWNERS
-
-Puedes automatizar quién revisa qué creando el archivo `.github/CODEOWNERS`:
-
-```text
-/Ros2/      @usuario-experto
-README.md   @usuario1 @usuario2
-```
+> 💡 **Nota avanzada:** Si prefieres la terminal para esto, existe la herramienta **`gh` (GitHub CLI)** que permite hacer `gh pr create` o `gh issue list`, pero se recomienda la web para una mejor visualización.
 
 ### Mantenimiento: Limpieza de Ramas
 
 ```bash
 # Borra ramas locales que ya no existen en el servidor
 git remote prune origin
-# Borra ramas locales que ya fueron mergeadas
+# Borra ramas locales que ya fueron fusionadas
 git branch --merged | grep -v "\*" | xargs -n 1 git branch -d
 ```
 
@@ -264,7 +190,7 @@ git branch --merged | grep -v "\*" | xargs -n 1 git branch -d
 Formato `X.Y.Z`:
 -   **X (Mayor):** Cambios que rompen compatibilidad.
 -   **Y (Menor):** Nuevas funciones.
--   **Z (Parche):** Correcciones.
+-   **Z (Parche):** Correcciones menores.
 
 | Comando | Descripción |
 |---------|-------------|
@@ -280,7 +206,7 @@ Formato `X.Y.Z`:
 |-----------|----------|
 | Branching | `git switch`, `git switch -c`, `git branch -d` |
 | Merging | `git merge`, `git merge --squash` |
-| PRs | `gh pr create`, `gh pr list` |
+| Remoto | `git fetch`, `git push origin rama` |
 | Etiquetas | `git tag`, `git push --tags` |
 | Limpieza | `git remote prune origin` |
 

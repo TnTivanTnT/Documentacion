@@ -321,7 +321,7 @@ git log --oneline --graph
 
 > 📖 **Teoría:** [Guía GitHub Intermedio - Pull Requests](Guia_GitHub_Intermedio.md#pull-requests)
 
-#### Ejercicio 3.1: Crear PR desde CLI
+#### Ejercicio 3.1: Crear PR en la Web
 ```bash
 cd ~/practica_git
 git switch main
@@ -331,16 +331,14 @@ echo "contenido para PR" > pr_test.txt
 git add pr_test.txt
 git commit -m "feat: añadir archivo para PR"
 
+# 1. Sube la rama
 git push origin feature/pr-test
-gh pr create --title "Añadir archivo de prueba" --body "Este PR añade un archivo de prueba."
 ```
+2. **En la Web:** Ve a tu repositorio en GitHub y haz clic en el botón verde **"Compare & pull request"**.
 
 #### Ejercicio 3.2: Gestionar PR
-```bash
-gh pr list
-gh pr view 1
-gh pr checkout 1
-```
+1. En la Web, ve a la pestaña **"Pull Requests"**.
+2. Abre tu PR, escribe un comentario y ciérralo (o hazle merge).
 
 ---
 
@@ -414,10 +412,8 @@ git merge upstream/main
 ```
 
 #### Ejercicio 5.3: Crear issue
-```bash
-gh issue create --title "Bug de ejemplo" --body "Descripción del bug"
-gh issue list
-```
+1. En la Web, ve a la pestaña **"Issues"**.
+2. Haz clic en **"New Issue"**, escribe un título y descripción (ej: "Optimizar código"), y guárdalo.
 
 ---
 
