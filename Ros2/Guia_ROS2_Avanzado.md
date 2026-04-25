@@ -56,6 +56,8 @@ Workspace ROS2
 
 > 💡 **Tip:** Compila primero el paquete de interfaces antes que el paquete de nodos. Los nodos Python dependerán de las interfaces generadas.
 
+> ⚠️ **Advertencia de Nomenclatura:** Al nombrar tus archivos de interfaz (ej. `MiMensaje.msg`), usa siempre `PascalCase`. **Nunca uses guiones (`-`) o `snake_case`**. Un nombre como `mi-mensaje.msg` causará errores de compilación crípticos porque el generador de código no puede procesarlo correctamente.
+
 ---
 
 ### Proceso para Crear un Paquete de Interfaces
@@ -68,7 +70,30 @@ mkdir -p mis_interfaces/{msg,srv,action}
 
 ### Definir mensaje (msg/MiMensaje.msg)
 
-```
+#### Tabla de Tipos Primitivos
+
+Al definir interfaces, usarás tipos de datos estándar de ROS. Aquí tienes una tabla de correspondencia con los tipos de Python:
+
+| Tipo ROS | Tipo Python | Descripción |
+| :--- | :--- | :--- |
+| `bool` | `bool` | Booleano |
+| `byte` | `bytes` | Un byte |
+| `char` | `str` (1 char) | Un caracter |
+| `float32` | `float` | Flotante de 32-bit |
+| `float64` | `float` | Flotante de 64-bit |
+| `int8` | `int` | Entero de 8-bit con signo |
+| `uint8` | `int` | Entero de 8-bit sin signo |
+| `int16` | `int` | Entero de 16-bit con signo |
+| `uint16`| `int` | Entero de 16-bit sin signo |
+| `int32` | `int` | Entero de 32-bit con signo |
+| `uint32`| `int` | Entero de 32-bit sin signo |
+| `int64` | `int` | Entero de 64-bit con signo |
+| `uint64`| `int` | Entero de 64-bit sin signo |
+| `string`| `str` | Cadena de texto |
+
+**Arrays:** Puedes definir arrays simplemente añadiendo `[]` al final del tipo (ej: `int32[]`). También puedes definir arrays de tamaño fijo (ej: `int32[5]`).
+
+```text
 string nombre
 int32 edad
 float64[] datos
@@ -191,38 +216,58 @@ Los lifecycle nodes son nodos con estados definidos que permiten gestionar su ci
 ```
                     ┌──────────────┐
             ┌──────>│   Inactive   │<──────┐
-            │       └──────────────┘       │
-            │              │               │
-     activate│              │deactivate    │cleanup
-            │              ▼               │
-┌──────────────┐    ┌──────────────┐       │
-│   Unconfigured│<───│    Active    │<──────┘
-└──────────────┘    └──────────────┘
-       │                   ▲
-       │configure          │activate
-       ▼                   │
-┌──────────────┐           │
-│   Configured │───────────┘
-└──────────────┘
-```
+             │       └──────────────┘       │
+             │              │               │
+      activate│              │deactivate     │
+             │              ▼               │
+ ┌──────────────┐    ┌──────────────┐       │
+ │   Unconfigured│<───│    Active    │<──────┘
+ └──────────────┘    └──────────────┘
+        │                   ▲
+        │configure          │cleanup
+        ▼                   │
+ ┌──────────────┐           │
+ │   Inactive   │───────────┘
+ └──────────────┘
+ 
+ > ⚠️ **Corrección:** El diagrama anterior es una representación común pero conceptualmente imprecisa. Un diagrama de estados más fiel a la implementación real es el siguiente. La transición `cleanup` va de `Inactive` a `Unconfigured`.
 
-### Estados y transiciones
+ ```
+                     ┌──────────────┐
+             ┌──────>│   Inactive   │<──────┐
+             │       └──────────────┘       │
+             │              │               │
+      activate│              │deactivate     │cleanup
+             │              ▼               │
+ ┌──────────────┐    ┌──────────────┐       │
+ │   Configured │<───│    Active    │       │
+ └──────────────┘    └──────────────┘       │
+        ▲                                   │
+        │configure                          │
+        │                                   │
+ ┌──────────────┐                           │
+ │ Unconfigured │<──────────────────────────┘
+ └──────────────┘
+ ```
 
-| Estado | Descripción |
-|--------|-------------|
-| Unconfigured | Nodo creado, sin configurar |
-| Inactive | Configurado, pero no ejecutando |
-| Active | Totalmente operativo |
-| Finalized | Nodo destruido |
+ ### Estados y transiciones
 
-| Transición | Descripción |
-|------------|-------------|
-| configure | Unconfigured → Inactive |
-| cleanup | Inactive → Unconfigured |
-| activate | Inactive → Active |
-| deactivate | Active → Inactive |
+ | Estado | Descripción |
+ |--------|-------------|
+ | Unconfigured | Estado inicial. El nodo está instanciado pero no tiene ninguna configuración cargada. |
+ | Inactive | El nodo está configurado y listo, pero no está procesando datos ni comunicándose (ej. los publicadores no publican). |
+ | Active | El nodo está totalmente operativo: publica, suscribe, procesa datos, etc. |
+ | Finalized | Estado terminal. El nodo ha sido destruido y no puede volver a usarse. |
 
-### Implementar Lifecycle Node
+ | Transición | Callback | Descripción |
+ |------------|----------|-------------|
+ | `configuring` | `on_configure` | Carga de parámetros, creación de publicadores/suscriptores, inicialización de recursos. Pasa de `Unconfigured` a `Inactive`. |
+ | `activating` | `on_activate` | Activa los recursos para que el nodo empiece a trabajar (ej. arranca timers). Pasa de `Inactive` a `Active`. |
+ | `deactivating` | `on_deactivate` | Detiene el trabajo del nodo (ej. para timers). Pasa de `Active` a `Inactive`. |
+ | `cleaning up` | `on_cleanup` | Libera los recursos creados en `on_configure`. Pasa de `Inactive` a `Unconfigured`. |
+ | `shutting down`| `on_shutdown` | Se llama cuando el nodo va a ser destruido. Libera todos los recursos restantes. |
+
+ ### Implementar Lifecycle Node
 
 ```python
 #!/usr/bin/env python3
@@ -268,9 +313,13 @@ class MiLifecycleNode(LifecycleNode):
 def main(args=None):
     rclpy.init(args=args)
     node = MiLifecycleNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -287,6 +336,58 @@ ros2 lifecycle set /mi_lifecycle_node activate
 ros2 lifecycle set /mi_lifecycle_node deactivate
 ```
 
+### Gestionar Lifecycle desde un Nodo
+
+Además de la línea de comandos, puedes controlar el estado de un lifecycle node mediante programación, lo cual es fundamental para la gestión de sistemas complejos. Esto se hace a través de clientes de servicio especiales.
+
+```python
+#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from rclpy.lifecycle.client import LifecycleClient
+from rclpy.lifecycle.transition import Transition
+from lifecycle_msgs.srv import ChangeState, GetState
+
+class LifecycleManager(Node):
+    def __init__(self):
+        super().__init__('lifecycle_manager')
+        
+        # Cliente para cambiar el estado
+        self.client = self.create_client(
+            ChangeState, 
+            '/mi_lifecycle_node/change_state'
+        )
+        
+        # Esperar al servicio
+        self.client.wait_for_service()
+        self.get_logger().info('Servicio de cambio de estado encontrado.')
+
+    def change_state(self, transition_id):
+        req = ChangeState.Request()
+        req.transition.id = transition_id
+        future = self.client.call_async(req)
+        rclpy.spin_until_future_complete(self, future)
+        
+        if future.result().success:
+            self.get_logger().info(f'Transición {transition_id} completada con éxito.')
+        else:
+            self.get_logger().error(f'Fallo al realizar la transición {transition_id}.')
+
+def main(args=None):
+    rclpy.init(args=args)
+    manager = LifecycleManager()
+    
+    # Secuencia de transiciones
+    manager.change_state(Transition.TRANSITION_CONFIGURE)
+    manager.change_state(Transition.TRANSITION_ACTIVATE)
+    
+    manager.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
 > 💡 **Práctica:** Ejercita lifecycle en [Ejercicios ROS2 - Sección 2](Ejercicios_ROS2.md#sección-2-lifecycle-nodes)
 
 ---
@@ -296,6 +397,11 @@ ros2 lifecycle set /mi_lifecycle_node deactivate
 ### ¿Qué es Composition?
 
 Composition permite ejecutar múltiples nodos en un mismo proceso. Esto elimina la sobrecarga de la comunicación entre procesos (usando serialización, copiado de memoria, etc.), lo que resulta en una comunicación mucho más eficiente.
+
+> **Analogía simple: Compartir piso en lugar de vivir en casas separadas.**
+>
+> -   **Sin Composition (Casas Separadas):** Cada nodo es una "casa" con su propia dirección (proceso) y sus propios recursos (memoria). Para que dos nodos se comuniquen, deben "enviar una carta" (un mensaje de red a través de DDS). Este proceso implica empaquetar el mensaje, enviarlo por la "calle" (la red), y que el otro nodo lo reciba y desempaquete. Es lento y consume recursos.
+> -   **Con Composition (Compartiendo Piso):** Varios nodos viven en el mismo "piso" (proceso contenedor). Para comunicarse, simplemente pueden "hablarse en la misma habitación" (pasarse punteros de memoria). No hay envíos, ni empaquetado, ni copias innecesarias. La comunicación es casi instantánea.
 
 #### El "Contenedor" de Componentes
 
@@ -616,7 +722,8 @@ self.subscription = self.create_subscription(
 |----------|---------|------------|
 | Reliability | RELIABLE, BEST_EFFORT | Sensores: BEST_EFFORT |
 | Durability | VOLATILE, TRANSIENT_LOCAL | TRANSIENT_LOCAL para config |
-| Depth | Número | Cola de mensajes |
+| History | KEEP_LAST, KEEP_ALL | KEEP_LAST es lo normal. KEEP_ALL puede consumir mucha memoria. |
+| Depth | Número | Tamaño de la cola cuando `History` es `KEEP_LAST`. |
 
 #### Tabla de Compatibilidad de QoS
 

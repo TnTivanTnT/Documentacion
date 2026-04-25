@@ -97,9 +97,13 @@ class NodoBasico(Node):
 def main(args=None):
     rclpy.init(args=args)
     nodo = NodoBasico()
-    rclpy.spin(nodo)
-    nodo.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(nodo)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        nodo.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -162,9 +166,13 @@ class MiPublisher(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = MiPublisher()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -195,9 +203,13 @@ class MiSubscriber(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = MiSubscriber()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -240,9 +252,13 @@ class VelocidadPublisher(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = VelocidadPublisher()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -367,9 +383,13 @@ class SumaServer(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = SumaServer()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -412,16 +432,154 @@ def main(args=None):
     if len(sys.argv) < 3:
         client.get_logger().error("Uso: ros2 run mis_ejercicios suma_client <a> <b>")
         return
-    
-    response = client.enviar_request(int(sys.argv[1]), int(sys.argv[2]))
-    client.get_logger().info(f'Resultado de {sys.argv[1]} + {sys.argv[2]} = {response.sum}')
-    client.destroy_node()
-    rclpy.shutdown()
+
+    try:
+        response = client.enviar_request(int(sys.argv[1]), int(sys.argv[2]))
+        client.get_logger().info(f'Resultado de {sys.argv[1]} + {sys.argv[2]} = {response.sum}')
+    except Exception as e:
+        client.get_logger().error(f'Error durante la llamada al servicio: {e}')
+    finally:
+        client.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
 ```
 No olvides añadir el `entry_point` en `setup.py`.
+</details>
+
+#### Ejercicio 1.5: Depurando un Servicio que no Responde
+
+Este ejercicio simula otro problema común: un cliente de servicio intenta llamar a un servicio, pero el servidor no está disponible o tarda en arrancar.
+
+**El problema:** El script del cliente se queda "colgado" o falla si el servidor no está listo inmediatamente.
+
+**Nodo Servidor (`servidor_lento.py`):**
+Este servidor simula un arranque lento.
+
+```python
+# mis_ejercicios/mis_ejercicios/servidor_lento.py
+import rclpy
+import time
+from rclpy.node import Node
+from example_interfaces.srv import AddTwoInts
+
+class ServidorLento(Node):
+    def __init__(self):
+        super().__init__('servidor_lento')
+        self.get_logger().info('Iniciando servidor, pero tomará 5 segundos...')
+        time.sleep(5)
+        self.srv = self.create_service(AddTwoInts, 'suma_lenta', self.suma_callback)
+        self.get_logger().info('¡Servidor lento listo!')
+
+    def suma_callback(self, request, response):
+        response.sum = request.a + request.b
+        return response
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ServidorLento()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+**Nodo Cliente (`cliente_impaciente.py` con el error):**
+Este cliente no espera a que el servicio esté disponible.
+
+```python
+# mis_ejercicios/mis_ejercicios/cliente_impaciente.py
+import rclpy
+from rclpy.node import Node
+from example_interfaces.srv import AddTwoInts
+
+class ClienteImpaciente(Node):
+    def __init__(self):
+        super().__init__('cliente_impaciente')
+        self.cli = self.create_client(AddTwoInts, 'suma_lenta')
+        # ERROR: No espera a que el servicio esté listo
+        self.get_logger().info('Cliente listo, llamando al servicio inmediatamente.')
+        self.req = AddTwoInts.Request()
+
+    def enviar_request(self, a, b):
+        self.req.a = a
+        self.req.b = b
+        # Esto probablemente fallará o se quedará colgado
+        self.future = self.cli.call_async(self.req)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+def main(args=None):
+    rclpy.init(args=args)
+    client = ClienteImpaciente()
+    try:
+        response = client.enviar_request(1, 2)
+        if response:
+            client.get_logger().info(f'Respuesta recibida: {response.sum}')
+        else:
+            client.get_logger().error('Fallo al llamar al servicio.')
+    except Exception as e:
+        client.get_logger().error(f'Error: {e}')
+    finally:
+        client.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+**Pasos para Depurar:**
+
+1.  Añade los `entry_points` para los nodos nuevos y recompila.
+2.  **Ejecuta el cliente primero:**
+    ```bash
+    ros2 run mis_ejercicios cliente_impaciente
+    ```
+    Verás que falla o se queda esperando indefinidamente.
+3.  **Ahora, ejecuta el servidor en una terminal y, rápidamente, el cliente en otra.**
+    ```bash
+    # Terminal 1
+    ros2 run mis_ejercicios servidor_lento
+    # Terminal 2 (inmediatamente después)
+    ros2 run mis_ejercicios cliente_impaciente
+    ```
+    El resultado es el mismo. El cliente no es lo suficientemente "paciente".
+4.  **Investiga y Soluciona:** La solución es hacer que el cliente espere activamente a que el servicio esté disponible antes de intentar llamarlo. Modifica `cliente_impaciente.py` para usar `self.cli.wait_for_service()`.
+
+<details>
+<summary>Haz clic para ver la solución</summary>
+
+La clave es el bucle `while not self.cli.wait_for_service(timeout_sec=1.0):` que ya usamos en el cliente robusto.
+
+**Solución en `cliente_impaciente.py`:**
+
+```python
+# ... imports ...
+
+class ClienteImpaciente(Node):
+    def __init__(self):
+        super().__init__('cliente_impaciente')
+        self.cli = self.create_client(AddTwoInts, 'suma_lenta')
+        
+        # SOLUCIÓN: Esperar activamente al servicio
+        while not self.cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Servicio "suma_lenta" no disponible, esperando...')
+            
+        self.get_logger().info('¡Servicio encontrado! Cliente listo.')
+        self.req = AddTwoInts.Request()
+
+    # ... el resto del código es igual ...
+```
+
+Con este cambio, el cliente esperará pacientemente a que `servidor_lento` termine su inicialización de 5 segundos antes de enviar la petición, y todo funcionará correctamente.
+
 </details>
 
 ---
@@ -492,10 +650,13 @@ def main(args=None):
     # Usamos un executor Multi-hilo para que el time.sleep no bloquee el nodo
     from rclpy.executors import MultiThreadedExecutor
     executor = MultiThreadedExecutor()
-    rclpy.spin(server, executor=executor)
-
-if __name__ == '__main__':
-    main()
+    try:
+        rclpy.spin(server, executor=executor)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.destroy_node()
+        rclpy.shutdown()
 ```
 </details>
 
@@ -556,12 +717,18 @@ def main(args=None):
     client = CuentaRegresivaClient()
     
     orden = int(sys.argv[1]) if len(sys.argv) > 1 else 10
-    client.send_goal(orden)
     
-    rclpy.spin(client)
-
-if __name__ == '__main__':
-    main()
+    try:
+        client.send_goal(orden)
+        rclpy.spin(client)
+    except KeyboardInterrupt:
+        client.get_logger().info('Cancelando el goal...')
+    except Exception as e:
+        client.get_logger().error(f'Error: {e}')
+    finally:
+        client.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
 ```
 </details>
 
@@ -606,9 +773,13 @@ class NodoConParams(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = NodoConParams()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -879,9 +1050,13 @@ class MiLifecycleNode(LifecycleNode):
 def main(args=None):
     rclpy.init(args=args)
     node = MiLifecycleNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -995,6 +1170,141 @@ self.subscription = self.create_subscription(
     String, 'topic', self.callback, qos)
 ```
 
+#### Ejercicio 5.3: Depurando un problema de QoS
+
+Este es un escenario de depuración muy común. Se te dan dos nodos: un publicador que envía una configuración inicial y un suscriptor que debe leerla.
+
+**El problema:** El suscriptor nunca recibe el mensaje. Tu tarea es descubrir por qué y solucionarlo.
+
+**Nodo 1: `config_publisher.py`**
+Este nodo publica un mensaje de configuración UNA SOLA VEZ y termina. Utiliza una QoS `TRANSIENT_LOCAL` para que el mensaje "persista" en el topic para los suscriptores que se conecten tarde.
+
+```python
+# mis_ejercicios/mis_ejercicios/config_publisher.py
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy
+from std_msgs.msg import String
+
+class ConfigPublisher(Node):
+    def __init__(self):
+        super().__init__('config_publisher')
+        qos_profile = QoSProfile(
+            depth=1,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL
+        )
+        self.publisher_ = self.create_publisher(String, 'config_topic', qos_profile)
+        msg = String()
+        msg.data = 'Modo de operacion: NORMAL'
+        self.publisher_.publish(msg)
+        self.get_logger().info('Publicada configuración inicial.')
+        # El nodo publica y termina, pero el mensaje debe persistir.
+        rclpy.shutdown()
+
+def main(args=None):
+    rclpy.init(args=args)
+    ConfigPublisher()
+
+if __name__ == '__main__':
+    main()
+```
+
+**Nodo 2: `config_subscriber.py` (con el error)**
+Este nodo se suscribe al topic de configuración para leer el modo de operación.
+
+```python
+# mis_ejercicios/mis_ejercicios/config_subscriber.py
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+class ConfigSubscriber(Node):
+    def __init__(self):
+        super().__init__('config_subscriber')
+        # QoS por defecto (incorrecta para este caso)
+        self.subscription = self.create_subscription(
+            String,
+            'config_topic',
+            self.listener_callback,
+            10)
+        self.get_logger().info('Esperando configuración...')
+
+    def listener_callback(self, msg):
+        self.get_logger().info(f'Configuración recibida: "{msg.data}"')
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ConfigSubscriber()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+**Pasos para depurar:**
+
+1.  Asegúrate de añadir los `entry_points` para ambos nodos en tu `setup.py` y recompila (`colcon build`).
+2.  **Ejecuta el publicador:**
+    ```bash
+    ros2 run mis_ejercicios config_publisher
+    ```
+    Verás que publica el mensaje y termina.
+3.  **Ejecuta el suscriptor (después):**
+    ```bash
+    ros2 run mis_ejercicios config_subscriber
+    ```
+    Observarás que el suscriptor se queda "Esperando configuración..." y nunca recibe nada.
+4.  **Investiga con `ros2 topic info`:** Esta es la herramienta clave. Usa el flag `-v` para ver los detalles de la QoS.
+    ```bash
+    ros2 topic info /config_topic -v
+    ```
+5.  **Analiza la salida:** Fíjate en los perfiles de QoS del publicador y del suscriptor. Notarás una diferencia clave en la política de `Durability`.
+6.  **Soluciona el problema:** Modifica el `config_subscriber.py` para que su perfil de QoS sea compatible con el del publicador.
+
+<details>
+<summary>Haz clic para ver la solución</summary>
+
+Para que el suscriptor reciba el último mensaje publicado en un topic con durabilidad `TRANSIENT_LOCAL`, él también debe solicitar esa misma durabilidad.
+
+**Solución en `config_subscriber.py`:**
+
+```python
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy
+from std_msgs.msg import String
+
+class ConfigSubscriber(Node):
+    def __init__(self):
+        super().__init__('config_subscriber')
+        
+        # Perfil QoS compatible
+        qos_profile = QoSProfile(
+            depth=1,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL
+        )
+        
+        self.subscription = self.create_subscription(
+            String,
+            'config_topic',
+            self.listener_callback,
+            qos_profile) # Usar el perfil correcto
+        self.get_logger().info('Esperando configuración...')
+
+    def listener_callback(self, msg):
+        self.get_logger().info(f'Configuración recibida: "{msg.data}"')
+
+# ... el resto del main es igual ...
+```
+
+</details>
+
 ---
 
 ## Reto Final Integrador: El Guardián del Almacén
@@ -1037,7 +1347,11 @@ Crear un sistema simple para un robot "Guardián" que patrulla un área, reporta
 6.  **¡Prueba todo el sistema!** Lanza el sistema y usa una segunda terminal para ejecutar `control_station` y ver cómo interactúa con el guardián.
 
 <details>
-<summary>🏆 Checklist de Éxito</summary>
+<summary>🏆 Checklist de Éxito y Pistas</summary>
+
+**Pista para `CMakeLists.txt`:** Cuando añadas las dependencias para `CalcularRuta.srv` (que usa `geometry_msgs/Point`), no olvides añadir `find_package(geometry_msgs REQUIRED)` y listarlo en `DEPENDENCIES` dentro de `rosidl_generate_interfaces`.
+
+**Checklist:**
 
 | Criterio | Comando de Verificación | Resultado Esperado |
 | :--- | :--- | :--- |

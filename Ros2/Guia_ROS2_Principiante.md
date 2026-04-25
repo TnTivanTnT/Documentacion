@@ -4,7 +4,7 @@
 
 ## Índice
 - [Introducción a ROS2](#introducción-a-ros2)
-- [Instalación de ROS2 Humble](#instalación-de-ros2-humble)
+- [Primeros Pasos: Instalación y Entorno](#primeros-pasos-instalación-y-entorno)
 - [Conceptos Fundamentales](#conceptos-fundamentales)
 - [Nodos en ROS2](#nodos-en-ros2)
 - [Topics y Mensajes](#topics-y-mensajes)
@@ -70,6 +70,28 @@ La instalación de ROS2 configura varias variables de entorno clave. Estas son a
 | `ROS_DOMAIN_ID`     | ID para la comunicación en redes DDS (avanzado)     |
 
 > Comprender estas variables te será útil a medida que trabajes con workspaces y paquetes más complejos.
+
+### 4. Entendiendo el Entorno: Underlay y Overlay
+
+Cuando trabajas con ROS2, es crucial entender cómo se "superponen" los entornos:
+
+1.  **Underlay (Entorno Base):** Es la instalación principal de ROS2 (`/opt/ros/humble`). Se carga primero y proporciona todas las herramientas estándar.
+2.  **Overlay (Tu Workspace):** Es tu carpeta de trabajo (`~/ros2_ws`). Se carga *después* del entorno base.
+
+```
++---------------------------------------------+
+|               Tu Terminal                   |
+|  +---------------------------------------+  |
+|  |  Overlay: ~/ros2_ws/install/setup.bash|  |  <-- Tus paquetes tienen prioridad
+|  |  (Lo que tú desarrollas)              |  |
+|  +---------------------------------------+  |
+|  +---------------------------------------+  |
+|  |  Underlay: /opt/ros/humble/setup.bash |  |  <-- Herramientas base de ROS2
+|  |  (Cargado desde tu ~/.bashrc)         |  |
+|  +---------------------------------------+  |
++---------------------------------------------+
+```
+Este sistema de capas permite que tus paquetes modificados o nuevos tengan prioridad sobre los instalados por defecto, sin necesidad de sobreescribir la instalación original de ROS2.
 
 ---
 
@@ -143,13 +165,15 @@ En un paquete Python, estos dos archivos trabajan juntos pero tienen responsabil
     - `<test_depend>`: Dependencias para las pruebas.
 
 - **`setup.py` (Script de Instalación - "Cómo se instala")**
-  - **Función:** Es un script estándar de Python (usando `setuptools`) que le dice a `colcon` **cómo instalar tu código Python**. Define qué archivos van en qué directorios y, lo más importante, crea los ejecutables.
-  - **Contenido clave:**
-    - `packages`: Los módulos de Python a incluir.
-    - `data_files`: Archivos que no son de Python (como `package.xml`, `launch files`, configs).
-    - `entry_points`: **Aquí es donde tus nodos se convierten en ejecutables**. Le dice a ROS2 que el comando `mi_nodo` debe llamar a la función `main` de tu script `mi_nodo.py`.
+   - **Función:** Es un script estándar de Python (usando `setuptools`) que le dice a `colcon` **cómo instalar tu código Python**. Define qué archivos van en qué directorios y, lo más importante, crea los ejecutables.
+   - **Contenido clave:**
+     - `packages`: Los módulos de Python a incluir.
+     - `data_files`: Archivos que no son de Python (como `package.xml`, `launch files`, configs).
+      - `entry_points`: **Aquí es donde tus nodos se convierten en ejecutables**. Le dice a ROS2 que el comando `mi_nodo` debe llamar a la función `main` de tu script `mi_nodo.py`. Durante el proceso de compilación, `colcon` crea un pequeño script ejecutable en `install/tu_paquete/lib/` que actúa como un punto de entrada, permitiendo que `ros2 run` encuentre y ejecute tu nodo.
 
-> 💡 **En resumen:** `package.xml` es para el **ecosistema ROS2** (dependencias entre paquetes). `setup.py` es para el **ecosistema Python** (instalar y hacer ejecutables tus scripts).
+> ⚠️ **Error Común:** Olvidar añadir carpetas como `launch` o `config` al `data_files` de tu `setup.py` es una de las principales razones por las que `ros2 launch` no encuentra tus archivos. ¡Anticípate y añádelos desde el principio!
+
+- **En resumen:** `package.xml` es para el **ecosistema ROS2** (dependencias entre paquetes). `setup.py` es para el **ecosistema Python** (instalar y hacer ejecutables tus scripts).
 
 ---
 
@@ -179,8 +203,10 @@ A continuación, se muestra un ejemplo de cómo se ven estos archivos:
 </package>
 ```
 
-**setup.py** - Configuración de Python:
+**setup.py** - Configuración de Python (Ejemplo Completo):
 ```python
+import os
+from glob import glob
 from setuptools import setup
 
 package_name = 'mis_ejercicios'
@@ -193,17 +219,21 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        # Añadir archivos launch
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+        # Añadir archivos de configuración
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='Usuario',
     maintainer_email='usuario@email.com',
-    description='Mi paquete Python de ROS2',
+    description='Mi paquete de ejercicios de ROS2 en Python',
     license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'mi_nodo = mis_ejercicios.mi_nodo:main',
+            'nodo_simple = mis_ejercicios.nodo_simple:main',
         ],
     },
 )
@@ -211,23 +241,27 @@ setup(
 
 **Añadir nodo Python:**
 
-Crear `mis_ejercicios/mis_ejercicios/mi_nodo.py`:
+Crear `mis_ejercicios/mis_ejercicios/nodo_simple.py`:
 ```python
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 
-class MiNodo(Node):
+class NodoSimple(Node):
     def __init__(self):
-        super().__init__('mi_nodo')
-        self.get_logger().info('¡Hola desde Python!')
+        super().__init__('nodo_simple')
+        self.get_logger().info('¡Hola desde mi nodo simple en Python!')
 
 def main(args=None):
     rclpy.init(args=args)
-    nodo = MiNodo()
-    rclpy.spin(nodo)
-    nodo.destroy_node()
-    rclpy.shutdown()
+    nodo = NodoSimple()
+    try:
+        rclpy.spin(nodo)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        nodo.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -238,7 +272,7 @@ Compilar y ejecutar:
 cd ~/ros2_ws
 colcon build --packages-select mis_ejercicios
 source install/setup.bash
-ros2 run mis_ejercicios mi_nodo
+ros2 run mis_ejercicios nodo_simple
 ```
 
 ---
@@ -387,8 +421,8 @@ ros2 run mi_paquete_cpp mi_nodo
 
 | Concepto | Descripción |
 |----------|-------------|
-| **Nodo** | Unidad de procesamiento que realiza cálculos |
-| **Topic** | Canal de comunicación para mensajes |
+| **Nodo** | Unidad de procesamiento que realiza cálculos. *Visible con `ros2 node list` y `rqt_graph`.* |
+| **Topic** | Canal de comunicación para mensajes. *Visible con `ros2 topic list` y `rqt_graph`.* |
 | **Mensaje** | Estructura de datos intercambiada |
 | **Service** | Comunicación request/response |
 | **Action** | Tareas de larga duración con feedback |
@@ -525,9 +559,13 @@ class PublisherNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = PublisherNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -557,9 +595,13 @@ class SubscriberNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = SubscriberNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

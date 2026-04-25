@@ -63,10 +63,14 @@ class ServiceServer(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    node = ServiceServer()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    server = ServiceServer()
+    try:
+        rclpy.spin(server)
+    except KeyboardInterrupt:
+        server.get_logger().info('Cerrando el nodo de servidor.')
+    finally:
+        server.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -99,10 +103,38 @@ class ServiceClient(Node):
 def main(args=None):
     rclpy.init(args=args)
     client = ServiceClient()
-    response = client.send_request(int(sys.argv[1]), int(sys.argv[2]))
-    client.get_logger().info(f'Resultado: {response.sum}')
-    client.destroy_node()
-    rclpy.shutdown()
+    
+    # Manejo robusto de argumentos de línea de comandos
+    if len(sys.argv) != 3:
+        client.get_logger().error('Uso: ros2 run <paquete> <nodo> <a> <b>')
+        # Salida limpia
+        client.destroy_node()
+        rclpy.shutdown()
+        return
+
+    try:
+        a = int(sys.argv[1])
+        b = int(sys.argv[2])
+    except ValueError:
+        client.get_logger().error('Los argumentos deben ser números enteros.')
+        # Salida limpia
+        client.destroy_node()
+        rclpy.shutdown()
+        return
+
+    # Envío de la solicitud y manejo de la respuesta
+    try:
+        response = client.send_request(a, b)
+        if response:
+            client.get_logger().info(f'Resultado: {a} + {b} = {response.sum}')
+        else:
+            client.get_logger().error('La llamada al servicio falló.')
+    except Exception as e:
+        client.get_logger().error(f'Excepción durante la llamada al servicio: {e}')
+    finally:
+        # Asegurar que los recursos se liberen siempre
+        client.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -190,39 +222,57 @@ from rclpy.node import Node
 from example_interfaces.action import Fibonacci
 
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.callback_groups import ReentrantCallbackGroup
+ 
+ class FibonacciActionServer(Node):
+     def __init__(self):
+         super().__init__('fibonacci_action_server')
+         # Usar un ReentrantCallbackGroup para permitir el paralelismo real
+         self._action_server = ActionServer(
+             self,
+             Fibonacci,
+             'fibonacci',
+             self.execute_callback,
+             callback_group=ReentrantCallbackGroup())
 
-class FibonacciActionServer(Node):
-    def __init__(self):
-        super().__init__('fibonacci_action_server')
-        self._action_server = ActionServer(
-            self,
-            Fibonacci,
-            'fibonacci',
-            self.execute_callback)
+     def execute_callback(self, goal_handle):
+         self.get_logger().info('Ejecutando goal...')
+         feedback_msg = Fibonacci.Feedback()
+         feedback_msg.partial_sequence = [0, 1]
 
-    def execute_callback(self, goal_handle):
-        self.get_logger().info('Ejecutando goal...')
-        feedback_msg = Fibonacci.Feedback()
-        feedback_msg.partial_sequence = [0, 1]
+         for i in range(1, goal_handle.request.order):
+             # Comprobar si el cliente ha solicitado cancelar la acción
+             if goal_handle.is_cancel_requested:
+                 goal_handle.canceled()
+                 self.get_logger().info('Goal cancelado')
+                 return Fibonacci.Result()
 
-        for i in range(1, goal_handle.request.order):
-            feedback_msg.partial_sequence.append(
-                feedback_msg.partial_sequence[i] + feedback_msg.partial_sequence[i-1])
-            self.get_logger().info(f'Feedback: {feedback_msg.partial_sequence}')
-            goal_handle.publish_feedback(feedback_msg)
+             feedback_msg.partial_sequence.append(
+                 feedback_msg.partial_sequence[i] + feedback_msg.partial_sequence[i-1])
+             self.get_logger().info(f'Feedback: {feedback_msg.partial_sequence}')
+             goal_handle.publish_feedback(feedback_msg)
+             # Simular un trabajo que toma tiempo
+             time.sleep(1)
 
-        goal_handle.succeed()
-        result = Fibonacci.Result()
-        result.sequence = feedback_msg.partial_sequence
-        return result
+         goal_handle.succeed()
+         result = Fibonacci.Result()
+         result.sequence = feedback_msg.partial_sequence
+         return result
 
 def main(args=None):
     rclpy.init(args=args)
     server = FibonacciActionServer()
     
-    # Se usa un MultiThreadedExecutor para evitar que el cálculo bloquee el nodo.
+    # Se usa un MultiThreadedExecutor para evitar que el cálculo bloquee otros callbacks.
+    # El ReentrantCallbackGroup es CRUCIAL para que esto funcione.
     executor = MultiThreadedExecutor()
-    rclpy.spin(server, executor=executor)
+    try:
+        rclpy.spin(server, executor=executor)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -256,8 +306,27 @@ class FibonacciActionClient(Node):
 def main(args=None):
     rclpy.init(args=args)
     client = FibonacciActionClient()
-    future = client.send_goal(10)
-    rclpy.spin_until_future_complete(client, future)
+    try:
+        future = client.send_goal(10)
+        rclpy.spin_until_future_complete(client, future)
+        
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            client.get_logger().info('Goal rechazado.')
+            return
+
+        client.get_logger().info('Goal aceptado. Esperando resultado...')
+        result_future = goal_handle.get_result_async()
+        rclpy.spin_until_future_complete(client, result_future)
+        
+        result = result_future.result().result
+        client.get_logger().info(f'Resultado final: {result.sequence}')
+        
+    except Exception as e:
+        client.get_logger().error(f'Excepción durante la llamada a la acción: {e}')
+    finally:
+        client.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -322,9 +391,13 @@ class ParamNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = ParamNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -458,6 +531,15 @@ def generate_launch_description():
 
 > 💡 **Buena práctica:** Crea launch files pequeños y reutilizables para cada "capacidad" de tu robot (ej: `sensores.launch.py`, `movimiento.launch.py`) y únelos en un launch file principal.
 
+> **Nota sobre formatos:** Aunque este curso se centra en **Python**, que es el formato más potente y flexible, los launch files también pueden escribirse en **XML** y **YAML**.
+
+| Formato | Ventajas | Desventajas |
+| :--- | :--- | :--- |
+| **Python** | Máxima flexibilidad, lógica condicional, bucles, acceso al sistema de archivos. | Curva de aprendizaje un poco mayor, más verboso para tareas simples. |
+| **XML/YAML**| Sintaxis simple y declarativa, fácil de leer para estructuras sencillas. | Sin lógica programática, menos flexible, más difícil de depurar. |
+
+> Para sistemas complejos, la comunidad ROS2 se ha inclinado mayoritariamente por los launch files de Python.
+
 ### Estructura de launch files
 
 ```python
@@ -478,8 +560,8 @@ from launch_ros.substitutions import FindPackageShare
 
 ```bash
 ros2 launch <paquete> <launch_file>
-ros2 launch mi_paquete mi_launch.py
-ros2 launch mi_paquete mi_launch.py frecuencia:=2.0
+ros2 launch mi_paquete mi_launch.launch.py
+ros2 launch mi_paquete mi_launch.launch.py frecuencia:=2.0
 ```
 
 ### Comandos de launch

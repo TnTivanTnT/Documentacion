@@ -71,3 +71,23 @@ Ahora, tu sistema ROS2 solo se comunicará con otros dispositivos que usen el mi
 
 > ⚠️ **Importante:** Después de modificar `.bashrc`, debes reiniciar tu terminal o ejecutar `source ~/.bashrc` en cada pestaña abierta para que los cambios surtan efecto.
 
+---
+
+## Entendiendo el "Sourcing": Underlay y Overlay
+
+Has añadido `source /opt/ros/humble/setup.bash` a tu `.bashrc`. Esto carga el **entorno base de ROS2 (underlay)** cada vez que abres una terminal, dándote acceso a todos los comandos de ROS2.
+
+Cuando crees tus propios proyectos en un workspace (ej: `~/ros2_ws`), compilarás tus paquetes. Para que ROS2 los encuentre, necesitarás ejecutar otro comando `source` en tu terminal:
+
+```bash
+# Dentro de tu workspace, después de compilar
+source install/setup.bash
+```
+
+Este segundo `source` carga tu workspace como una **capa superior (overlay)**. ROS2 buscará primero en tu workspace y luego en el entorno base.
+
+| Sourcing | ¿Qué hace? | ¿Cuándo? |
+| :--- | :--- | :--- |
+| **`source /opt/ros/humble/setup.bash`** | Carga el entorno de ROS2 | Automáticamente en cada terminal (gracias al `.bashrc`) |
+| **`source ~/ros2_ws/install/setup.bash`** | Carga los paquetes de tu workspace | **Manualmente**, en cada terminal donde quieras usar tus nodos |
+
