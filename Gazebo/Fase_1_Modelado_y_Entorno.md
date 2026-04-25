@@ -5,75 +5,101 @@
 
 ## Introducción a Ignition Gazebo (Fortress)
 
-Ignition Gazebo 6 (ahora llamado Gazebo Sim) es el sucesor del Gazebo "Classic" (v11). Es más modular, eficiente y está diseñado para integrarse nativamente con ROS 2 mediante un sistema de plugins y un "bridge".
-
-### Diferencias Clave
-- **Classic:** Un solo proceso pesado. Comunicación mediante sockets internos.
-- **Ignition:** Basado en componentes. Comunicación mediante `Ignition Transport`. Necesita el `ros_gz_bridge` para hablar con ROS 2.
+Ignition Gazebo 6 es el sucesor de Gazebo "Classic". Es más modular y requiere el `ros_gz_bridge` para hablar con ROS 2.
 
 ---
 
-## Estructura del Paquete
+## 1. Estructura del Paquete
 
-Para este proyecto, lo ideal es organizar tu workspace de ROS 2 así:
+Asegúrate de estar en tu carpeta de paquete (`mi_robot_sim/`) y verifica las subcarpetas:
+`description/`, `worlds/`, `launch/`, `config/`, `meshes/`.
 
-```text
-mi_robot_sim/
-├── description/
-│   └── robot.urdf.xacro      # Geometría y plugins del robot
-├── launch/
-│   └── sim.launch.py         # Lanza Gazebo y el robot
-├── worlds/
-│   └── habitacion.sdf        # Escenario de simulación
-└── package.xml
+---
+
+## 2. Creando el Robot en URDF
+
+El URDF describe la física del robot mediante **Links** (piezas) y **Joints** (uniones).
+
+### Estructura básica: Link
+Cada pieza tiene tres bloques fundamentales:
+- **Visual:** Lo que vemos en la simulación.
+- **Collision:** Fronteras para choques.
+- **Inertial:** Masa y distribución (¡Vital para la física!).
+
+### Ejemplo: Robot Diferencial Simple
+Crea el archivo `description/robot.urdf` y pega este código:
+
+```xml
+<?xml version="1.0"?>
+<robot name="mi_robot">
+
+  <!-- Link principal (Chasis) -->
+  <link name="base_link">
+    <visual>
+      <geometry><box size="0.4 0.3 0.1"/></geometry>
+      <material name="blue"><color rgba="0 0 1 1"/></material>
+    </visual>
+    <collision>
+      <geometry><box size="0.4 0.3 0.1"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <!-- Rueda Izquierda -->
+  <link name="left_wheel">
+    <visual>
+      <geometry><cylinder radius="0.1" length="0.05"/></geometry>
+    </visual>
+    <inertial>
+      <mass value="0.2"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+    </inertial>
+  </link>
+
+  <!-- Unión de la rueda -->
+  <joint name="left_wheel_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="left_wheel"/>
+    <origin xyz="0 0.175 0" rpy="-1.57 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- Rueda Derecha (Ejercicio: intenta añadirla tú siguiendo la izquierda) -->
+
+  <!-- Plugin de Control (Diff Drive) -->
+  <gazebo>
+    <plugin
+      filename="ignition-gazebo-diff-drive-system"
+      name="ignition::gazebo::systems::DiffDrive">
+      <left_joint>left_wheel_joint</left_joint>
+      <!-- Asegúrate de añadir el joint de la derecha cuando lo crees -->
+      <wheel_separation>0.35</wheel_separation>
+      <wheel_radius>0.1</wheel_radius>
+      <topic>cmd_vel</topic>
+    </plugin>
+  </gazebo>
+
+</robot>
 ```
 
 ---
 
-### 1. El Modelo del Robot Diferencial
+## 3. Importación de Modelos desde CAD (SolidWorks, etc.)
 
-Un robot diferencial en Gazebo necesita tres elementos fundamentales:
-1.  **Visual:** Cómo se ve (cajas, cilindros o mallas 3D).
-2.  **Collision:** Las fronteras físicas para los choques (deben ser simples).
-3.  **Inertial:** Masa y distribución de peso.
+Si tienes un diseño en SolidWorks, puedes exportar tus piezas como archivos `.dae` (Collada) o `.stl`.
 
----
-
-## 2. Importación de Modelos desde CAD (SolidWorks, etc.)
-
-Si tienes un diseño en SolidWorks, no necesitas conformarte con cajas y cilindros. Puedes exportar tus piezas e integrarlas.
-
-### Formatos recomendados
-- **`.dae` (Collada):** RECOMENDADO para la parte **Visual**. Conserva colores, texturas y materiales del CAD.
-- **`.stl`:** Recomendado solo si no te importan los colores o para mallas de **Colisión** simples.
-
-### El problema del escalado (mm vs metros)
-Los programas de CAD suelen trabajar en milímetros, pero ROS 2 y Gazebo trabajan en **metros**. 
-- Si exportas un chasis de 500mm y lo importas sin más, ¡medirá 500 metros en Gazebo!
-- **Solución:** En el URDF, aplica un escalado de `0.001`:
-  ```xml
-  <mesh filename="package://mi_robot_sim/meshes/chasis.dae" scale="0.001 0.001 0.001"/>
-  ```
-
-### Visual vs Collision: Regla de Oro
-**NUNCA** uses el modelo de SolidWorks con todos sus tornillos y detalles para la etiqueta `<collision>`. 
-- **Visual:** Usa tu archivo `.dae` detallado.
-- **Collision:** Usa cajas (`<box>`) o cilindros (`<cylinder>`) que envuelvan la forma general. Calcular choques entre miles de polígonos de un tornillo de SolidWorks destruirá el rendimiento de tu PC.
+- **Visual:** Usa el `.dae` detallado.
+- **Collision:** Usa formas simples (box, cylinder) para no saturar el motor de física.
+- **Escalado:** Recuerda usar `scale="0.001 0.001 0.001"` si tu CAD está en milímetros.
 
 ---
 
-## 3. El Mundo (World)
+## 4. El Escenario (World)
 
-El "mundo" es el escenario donde vivirá tu robot. En Ignition no se crea solo; debes crear un archivo de texto con extensión `.sdf` dentro de la carpeta `worlds/`.
-
-### Crear el archivo manualmente
-Ejecuta en tu terminal (estando dentro del paquete):
-```bash
-touch worlds/mi_mundo.sdf
-```
-
-### Contenido básico de un mundo
-Abre el archivo y pega este código (incluye sol, suelo y la física necesaria):
+Elescenario es un archivo `.sdf`. Crea `worlds/mi_mundo.sdf`:
 
 ```xml
 <?xml version="1.0" ?>
@@ -83,16 +109,9 @@ Abre el archivo y pega este código (incluye sol, suelo y la física necesaria):
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1.0</real_time_factor>
     </physics>
-    
-    <!-- Plugins esenciales de Ignition -->
     <plugin filename="libignition-gazebo-physics-system.so" name="ignition::gazebo::systems::Physics"/>
     <plugin filename="libignition-gazebo-user-commands-system.so" name="ignition::gazebo::systems::UserCommands"/>
     <plugin filename="libignition-gazebo-scene-broadcaster-system.so" name="ignition::gazebo::systems::SceneBroadcaster"/>
-
-    <light type="directional" name="sun">
-      <cast_shadows>true</cast_shadows>
-      <pose>0 0 10 0 0 0</pose>
-    </light>
 
     <model name="ground_plane">
       <static>true</static>
@@ -111,22 +130,20 @@ Abre el archivo y pega este código (incluye sol, suelo y la física necesaria):
 
 ---
 
-## 4. Comandos de Lanzamiento Rápidos
+## 5. Lanzamiento de la Simulación
 
-Para lanzar un mundo vacío en Ignition Gazebo 6:
-
+Para ver tu mundo vacío:
 ```bash
-ign gazebo empty.sdf
+ign gazebo worlds/mi_mundo.sdf
 ```
 
-Para insertar un modelo URDF en una simulación ya abierta:
-
+Para insertar tu robot URDF en el mundo:
 ```bash
-ros2 run ros_gz_sim create -file /ruta/al/robot.urdf -name mi_robot
+ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot
 ```
 
 ---
 
 ## Siguientes Pasos
 
-Continúa con la **[Fase 2: Teleoperación y Bridge](Fase_2_Teleoperacion_y_Bridge.md)** para conectar ROS 2 con la simulación.
+Continúa con la **[Fase 2: Teleoperación y Bridge](Fase_2_Teleoperacion_y_Bridge.md)** para conectar ROS 2 con la simulación y empezar a mover tu robot.
