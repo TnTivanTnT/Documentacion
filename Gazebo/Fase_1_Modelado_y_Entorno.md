@@ -124,6 +124,8 @@ Crea **`worlds/mi_mundo.sdf`**:
     <physics name="1ms" type="ignored">
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1.0</real_time_factor>
+    </physics>
+
     <!-- Plugins esenciales de Ignition -->
     <plugin filename="libignition-gazebo-physics-system.so" name="ignition::gazebo::systems::Physics"/>
     <plugin filename="libignition-gazebo-user-commands-system.so" name="ignition::gazebo::systems::UserCommands"/>
