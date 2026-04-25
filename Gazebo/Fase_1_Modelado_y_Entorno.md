@@ -26,15 +26,18 @@ Cada pieza tiene tres bloques fundamentales:
 - **Collision:** Fronteras para choques.
 - **Inertial:** Masa y distribución (¡Vital para la física!).
 
-### Ejemplo: Robot Diferencial Completo (3 ruedas)
-Crea el archivo `description/robot.urdf` y pega este código (Chasis + 2 Ruedas + 1 Rueda Loca):
+### Ejemplo: Robot Diferencial Completo (Lógica desde el suelo)
+Crea el archivo `description/robot.urdf`. Usaremos coordenadas positivas para que el robot se construya sobre el suelo:
 
 ```xml
 <?xml version="1.0"?>
 <robot name="mi_robot">
 
-  <!-- CHASIS (Cuerpo principal) -->
-  <link name="base_link">
+  <!-- LINK DE ORIGEN (En el suelo, entre las ruedas) -->
+  <link name="base_link"></link>
+
+  <!-- CHASIS (Elevado para que el eje esté a 0.1m del suelo) -->
+  <link name="chassis">
     <visual>
       <geometry><box size="0.4 0.3 0.1"/></geometry>
       <material name="blue"><color rgba="0 0 1 1"/></material>
@@ -47,6 +50,11 @@ Crea el archivo `description/robot.urdf` y pega este código (Chasis + 2 Ruedas 
       <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
     </inertial>
   </link>
+
+  <joint name="chassis_joint" type="fixed">
+    <parent link="base_link"/><child link="chassis"/>
+    <origin xyz="0 0 0.1"/> <!-- El centro del chasis está a 10cm del suelo -->
+  </joint>
 
   <!-- RUEDA IZQUIERDA -->
   <link name="left_wheel">
@@ -64,7 +72,7 @@ Crea el archivo `description/robot.urdf` y pega este código (Chasis + 2 Ruedas 
 
   <joint name="left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="left_wheel"/>
-    <origin xyz="0 0.175 0" rpy="-1.57 0 0"/>
+    <origin xyz="0 0.175 0.1" rpy="-1.57 0 0"/> <!-- Z=0.1 (Radio de la rueda) -->
     <axis xyz="0 0 1"/>
   </joint>
 
@@ -84,11 +92,11 @@ Crea el archivo `description/robot.urdf` y pega este código (Chasis + 2 Ruedas 
 
   <joint name="right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="right_wheel"/>
-    <origin xyz="0 -0.175 0" rpy="-1.57 0 0"/>
+    <origin xyz="0 -0.175 0.1" rpy="-1.57 0 0"/> <!-- Z=0.1 (Radio de la rueda) -->
     <axis xyz="0 0 1"/>
   </joint>
 
-  <!-- RUEDA LOCA (CASTER WHEEL) - Delantera para equilibrio -->
+  <!-- RUEDA LOCA (CASTER WHEEL) -->
   <link name="caster_wheel">
     <visual>
       <geometry><sphere radius="0.05"/></geometry>
@@ -104,8 +112,7 @@ Crea el archivo `description/robot.urdf` y pega este código (Chasis + 2 Ruedas 
 
   <joint name="caster_wheel_joint" type="fixed">
     <parent link="base_link"/><child link="caster_wheel"/>
-    <!-- Colocamos el centro de la esfera a -0.05 para que la base toque suelo -->
-    <origin xyz="0.15 0 -0.05" rpy="0 0 0"/>
+    <origin xyz="0.15 0 0.05" rpy="0 0 0"/> <!-- Z=0.05 (Radio de la esfera) -->
   </joint>
 
   <!-- PLUGIN DE CONTROL -->
@@ -119,6 +126,8 @@ Crea el archivo `description/robot.urdf` y pega este código (Chasis + 2 Ruedas 
     </plugin>
   </gazebo>
 
+</robot>
+```
 </robot>
 ```
 
@@ -186,8 +195,8 @@ ign gazebo worlds/mi_mundo.sdf
 
 Para insertar tu robot URDF en el mundo:
 ```bash
-# Spawneamos el robot un poco elevado (-z 0.11) para que no atraviese el suelo
-ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot -z 0.11
+# Spawneamos el robot con un margen mínimo sobre el suelo (-z 0.01)
+ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot -z 0.01
 ```
 
 ---
