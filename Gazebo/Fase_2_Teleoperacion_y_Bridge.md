@@ -48,7 +48,9 @@ ros2 run ros_gz_bridge parameter_bridge /cmd_vel@geometry_msgs/msg/Twist@ignitio
 
 Una vez que el bridge está funcionando, puedes controlar tu robot diferencial usando el paquete estándar de ROS 2:
 
-1.  Asegúrate de que la simulación en Gazebo no esté en pausa (clic en el botón Play).
+> ⚠️ **IMPORTANTE:** Gazebo se inicia por defecto en PAUSA. Si no haces clic en el botón **Play** (triángulo azul abajo a la izquierda), el robot no recibirá los comandos y no se moverá.
+
+1.  Asegúrate de que la simulación en Gazebo esté en reproducción (Play).
 2.  En una nueva terminal, ejecuta:
     ```bash
     ros2 run teleop_twist_keyboard teleop_twist_keyboard

@@ -104,6 +104,7 @@ Crea el archivo `description/robot.urdf` y pega este código (Chasis + 2 Ruedas 
 
   <joint name="caster_wheel_joint" type="fixed">
     <parent link="base_link"/><child link="caster_wheel"/>
+    <!-- Colocamos el centro de la esfera a -0.05 para que la base toque suelo -->
     <origin xyz="0.15 0 -0.05" rpy="0 0 0"/>
   </joint>
 
@@ -185,7 +186,8 @@ ign gazebo worlds/mi_mundo.sdf
 
 Para insertar tu robot URDF en el mundo:
 ```bash
-ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot
+# Spawneamos el robot un poco elevado (-z 0.11) para que no atraviese el suelo
+ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot -z 0.11
 ```
 
 ---
