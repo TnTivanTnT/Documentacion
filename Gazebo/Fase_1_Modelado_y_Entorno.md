@@ -64,7 +64,16 @@ Los programas de CAD suelen trabajar en milímetros, pero ROS 2 y Gazebo trabaja
 
 ## 3. El Mundo (World)
 
-Los mundos en Ignition usan el formato `.sdf`. Un mundo básico debe incluir los "Systems" (plugins) para renderizar, detectar colisiones y aplicar gravedad.
+El "mundo" es el escenario donde vivirá tu robot. En Ignition no se crea solo; debes crear un archivo de texto con extensión `.sdf` dentro de la carpeta `worlds/`.
+
+### Crear el archivo manualmente
+Ejecuta en tu terminal (estando dentro del paquete):
+```bash
+touch worlds/mi_mundo.sdf
+```
+
+### Contenido básico de un mundo
+Abre el archivo y pega este código (incluye sol, suelo y la física necesaria):
 
 ```xml
 <?xml version="1.0" ?>
@@ -75,7 +84,7 @@ Los mundos en Ignition usan el formato `.sdf`. Un mundo básico debe incluir los
       <real_time_factor>1.0</real_time_factor>
     </physics>
     
-    <!-- Plugins básicos de Ignition -->
+    <!-- Plugins esenciales de Ignition -->
     <plugin filename="libignition-gazebo-physics-system.so" name="ignition::gazebo::systems::Physics"/>
     <plugin filename="libignition-gazebo-user-commands-system.so" name="ignition::gazebo::systems::UserCommands"/>
     <plugin filename="libignition-gazebo-scene-broadcaster-system.so" name="ignition::gazebo::systems::SceneBroadcaster"/>
@@ -102,7 +111,7 @@ Los mundos en Ignition usan el formato `.sdf`. Un mundo básico debe incluir los
 
 ---
 
-## 3. Comandos de Lanzamiento Rápidos
+## 4. Comandos de Lanzamiento Rápidos
 
 Para lanzar un mundo vacío en Ignition Gazebo 6:
 
