@@ -2,11 +2,15 @@
 
 > 📚 [Volver al Índice de Documentación](../README.md)
 
+En esta fase daremos un sensor LiDAR al robot para que detecte obstáculos. Esto permitirá que el robot pase de ser "ciego" a tener una representación de lo que le rodea.
+
+> ⚠️ **IMPORTANTE:** Asegúrate de haber actualizado tu archivo de mundo (**`worlds/mi_mundo.sdf`**) con el plugin de sensores como se indica en la [Fase 1](Fase_1_Modelado_y_Entorno.md).
+
 ---
 
-## 1. URDF Completo y Definitivo
+## 1. URDF Completo con LiDAR y Telemetría
 
-Sobrescribe tu archivo **`description/robot.urdf`** con esta versión. He mejorado los plugins para asegurar que RViz2 reciba la posición exacta de cada pieza:
+Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el chasis, las ruedas, el LiDAR y los plugins necesarios para que RViz2 no dé errores de posición:
 
 ```xml
 <?xml version="1.0"?>
@@ -47,7 +51,7 @@ Sobrescribe tu archivo **`description/robot.urdf`** con esta versión. He mejora
   </link>
   <joint name="caster_wheel_joint" type="fixed"><parent link="base_link"/><child link="caster_wheel"/><origin xyz="0.15 0 0.05"/></joint>
 
-  <!-- LIDAR -->
+  <!-- LIDAR (Láser) -->
   <link name="lidar_link">
     <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="red"><color rgba="1 0 0 1"/></material></visual>
     <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
@@ -55,8 +59,9 @@ Sobrescribe tu archivo **`description/robot.urdf`** con esta versión. He mejora
   </link>
   <joint name="lidar_joint" type="fixed"><parent link="chassis"/><child link="lidar_link"/><origin xyz="0.1 0 0.08"/></joint>
 
-  <!-- PLUGINS DE CONTROL Y TELEMETRÍA -->
+  <!-- PLUGINS DE GAZEBO -->
   <gazebo>
+    <!-- Movimiento diferencial -->
     <plugin filename="ignition-gazebo-diff-drive-system" name="ignition::gazebo::systems::DiffDrive">
       <left_joint>left_wheel_joint</left_joint>
       <right_joint>right_wheel_joint</right_joint>
@@ -64,21 +69,14 @@ Sobrescribe tu archivo **`description/robot.urdf`** con esta versión. He mejora
       <wheel_radius>0.1</wheel_radius>
       <topic>cmd_vel</topic>
     </plugin>
-
-    <!-- Publicador de estado de las juntas (Ruedas) -->
+    <!-- Publicador de estado de las ruedas -->
     <plugin filename="ignition-gazebo-joint-state-publisher-system" name="ignition::gazebo::systems::JointStatePublisher">
-        <joint_name>left_wheel_joint</joint_name>
-        <joint_name>right_wheel_joint</joint_name>
-    </plugin>
-
-    <!-- Publicador de posiciones (TFs automáticas) -->
-    <plugin filename="ignition-gazebo-pose-publisher-system" name="ignition::gazebo::systems::PosePublisher">
-        <publish_link_pose>true</publish_link_pose>
-        <use_static_tf_publisher>true</use_static_tf_publisher>
+      <joint_name>left_wheel_joint</joint_name>
+      <joint_name>right_wheel_joint</joint_name>
     </plugin>
   </gazebo>
 
-  <!-- Sensor LiDAR -->
+  <!-- Configuración del sensor LiDAR -->
   <gazebo reference="lidar_link">
     <sensor name="gpu_lidar" type="gpu_lidar">
       <pose>0 0 0 0 0 0</pose>
@@ -98,35 +96,36 @@ Sobrescribe tu archivo **`description/robot.urdf`** con esta versión. He mejora
 
 ---
 
-## 2. Ejecución Completa (Bulletproof)
+## 2. Ejecución Completa (Paso a Paso)
 
-Abre las terminales en este orden. He simplificado el puente para que sea más robusto:
+Para ver tu robot en Gazebo y sus datos en RViz2, abre estas 5 terminales:
 
-### Terminal 1: Gazebo
+### Terminal 1: Abrir el Mundo
 ```bash
 ign gazebo worlds/mi_mundo.sdf
 ```
-*Dale al **Play**.*
+*Haz clic en **Play** inmediatamente.*
 
-### Terminal 2: Spawn
+### Terminal 2: Meter el Robot (Spawn)
 ```bash
 ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot -z 0.01
 ```
 
-### Terminal 3: El Puente
+### Terminal 3: El Puente (Bridge)
 ```bash
 ros2 run ros_gz_bridge parameter_bridge \
   /cmd_vel@geometry_msgs/msg/Twist@ignition.msgs.Twist \
   /scan@sensor_msgs/msg/LaserScan@ignition.msgs.LaserScan \
-  /model/mi_robot/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model \
-  /model/mi_robot/pose@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V
+  /model/mi_robot/joint_state@sensor_msgs/msg/JointState@ignition.msgs.Model
 ```
 
-### Terminal 4: Robot State Publisher
+### Terminal 4: Publicador de Estado (Robot State Publisher)
+Este comando le dice a ROS cómo está montado el robot y dónde están las ruedas.
 ```bash
 ros2 run robot_state_publisher robot_state_publisher --ros-args \
   -p robot_description:="$(cat description/robot.urdf)" \
-  -p use_sim_time:=True
+  -p use_sim_time:=True \
+  -r /joint_states:=/model/mi_robot/joint_state
 ```
 
 ### Terminal 5: RViz2
@@ -136,10 +135,20 @@ ros2 run rviz2 rviz2 --ros-args -p use_sim_time:=True
 
 ---
 
-## 3. Verificación Final en RViz2
-Si las ruedas siguen saliendo mal:
-1.  En la Terminal 4, mira si salen errores de "Joint not found".
-2.  En una terminal nueva, escribe `ros2 topic echo /joint_states` y verifica que aparecen los nombres `left_wheel_joint` y `right_wheel_joint`.
+## 3. Configuración de RViz2
+
+1.  **Fixed Frame:** Escribe `base_link`.
+2.  **Add -> By display type -> RobotModel**.
+    - En **Description Topic** escribe: `/robot_description`.
+3.  **Add -> By topic -> /scan**.
+
+---
+
+## 4. Solución de errores visuales (Ruedas Rojas)
+
+Si las ruedas salen rojas o en el centro:
+1. Asegúrate de que la Terminal 4 incluya `-p use_sim_time:=True`.
+2. En RViz2, dentro de **RobotModel**, cambia **Reliability Policy** a `Best Effort`.
 
 ---
 
