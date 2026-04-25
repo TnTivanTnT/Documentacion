@@ -1,20 +1,27 @@
-# Fase 3: Sensores y Percepción
+# Fase 3: Sensores y Percepción (Dando "Vista" al Robot)
 
 > 📚 [Volver al Índice de Documentación](../README.md)
 
-Para que el robot pueda detectar obstáculos y mapear, necesita un sensor de rango (LiDAR). En Ignition Gazebo, la integración se hace en dos pasos dentro de tu archivo **`description/robot.urdf`**.
+Hasta ahora, tenemos un robot que se mueve, pero es "ciego": no sabe si tiene una pared delante. En esta fase, le daremos un sensor LiDAR para que pueda "ver" y aprenderemos a llevar esa información desde el simulador hasta el cerebro del robot (ROS 2).
 
 ---
 
-## 1. Integración del LiDAR en el URDF
+## 1. El Concepto: ¿Cómo "ve" el robot?
 
-Abre tu archivo `description/robot.urdf` y añade los siguientes bloques de código **antes de la etiqueta final `</robot>`**.
+El flujo de información es el siguiente:
+1.  **Gazebo:** Genera rayos láser virtuales que chocan contra las paredes.
+2.  **El Bridge:** Actúa como un cable que traduce esos rayos de Gazebo al idioma de ROS 2.
+3.  **RViz2:** Nos permite a nosotros ver lo mismo que está viendo el robot.
+4.  **Tu Código:** Analiza esos datos para decidir si el robot debe frenar o girar.
 
-### Paso A: Crear la pieza física (Link y Joint)
-Esto define dónde está colocado el sensor físicamente en el robot.
+---
 
+## 2. Paso A: Añadir el Sensor físico al URDF
+
+Abre `description/robot.urdf` y añade estos dos bloques antes de `</robot>`.
+
+### La pieza física (Link y Joint)
 ```xml
-  <!-- LINK DEL LIDAR (La pieza física del sensor) -->
   <link name="lidar_link">
     <visual>
       <geometry><cylinder radius="0.05" length="0.04"/></geometry>
@@ -29,17 +36,14 @@ Esto define dónde está colocado el sensor físicamente en el robot.
     </inertial>
   </link>
 
-  <!-- Unión del LiDAR al chasis -->
   <joint name="lidar_joint" type="fixed">
     <parent link="chassis"/>
     <child link="lidar_link"/>
-    <origin xyz="0.1 0 0.08" rpy="0 0 0"/> <!-- Ajusta la altura según tu robot -->
+    <origin xyz="0.1 0 0.08" rpy="0 0 0"/>
   </joint>
 ```
 
-### Paso B: Configurar el Sensor para Gazebo
-Este bloque le dice a Gazebo que el `lidar_link` que acabamos de crear debe comportarse como un sensor láser real.
-
+### El sensor de Gazebo (El plugin)
 ```xml
   <gazebo reference="lidar_link">
     <sensor name="gpu_lidar" type="gpu_lidar">
@@ -69,43 +73,56 @@ Este bloque le dice a Gazebo que el `lidar_link` que acabamos de crear debe comp
 
 ---
 
-## 2. Configurar el Bridge para el Sensor
+## 3. Paso B: Conectar el Ojo con el Cerebro (El Bridge)
 
-Ahora que Gazebo genera datos en el topic `scan`, necesitamos pasarlos a ROS 2 como un mensaje del tipo `sensor_msgs/msg/LaserScan`.
-
-Añade esto a tu configuración del bridge (o ejecútalo por terminal):
+Para que ROS 2 reciba los datos, abre una terminal nueva y ejecuta el "traductor":
 
 ```bash
 ros2 run ros_gz_bridge parameter_bridge /scan@sensor_msgs/msg/LaserScan@ignition.msgs.LaserScan
 ```
+**¿Por qué este comando?** Porque el LiDAR publica en un formato de Ignition, y nosotros necesitamos que llegue a ROS 2 como un `LaserScan`.
 
 ---
 
-## 3. Visualización en RViz2
+## 4. Paso C: Ver a través de los ojos del robot (RViz2)
 
-Con los datos fluyendo hacia ROS 2, podemos ver qué ve el robot:
+Ahora comprobaremos si la conexión es correcta usando el visualizador técnico.
 
 1.  Lanza RViz2: `ros2 run rviz2 rviz2`
-2.  Añade el componente **LaserScan**.
-3.  Configura el topic a `/scan`.
-4.  Cambia el **Fixed Frame** a `base_link` (para ver los puntos moviéndose con el robot).
+2.  **Configura el entorno:** En la columna izquierda, cambia `Fixed Frame` de "map" a **`base_link`**.
+3.  **Añade el sensor:**
+    - Haz clic en **Add** (abajo a la izquierda).
+    - Selecciona la pestaña **By topic**.
+    - Busca `/scan` y dale a OK.
+4.  **Verificación:** Deberías ver líneas rojas o puntos apareciendo alrededor de tu robot. ¡Esos son los obstáculos que el robot está detectando!
 
 ---
 
-## 4. Detección de Obstáculos (Python)
+## 5. Paso D: Detección de Obstáculos (Lógica)
 
-Con los datos de `/scan`, puedes crear un nodo que evite choques:
+Ahora que los datos están en ROS 2, podemos crear un nodo que tome decisiones. Esto es lo que permite que el robot no choque.
 
+**Ejemplo de lógica para un nodo Python:**
 ```python
-def listener_callback(self, msg):
-    # Cogemos la distancia mínima detectada al frente
-    distancia_min = min(msg.ranges)
-    if distancia_min < 0.5:
-        self.get_logger().warn("¡CUIDADO! Obstáculo a menos de 50cm")
+def scan_callback(self, msg):
+    # msg.ranges contiene las distancias en 360 grados
+    # El centro del array es lo que hay justo delante
+    distancia_frontal = msg.ranges[len(msg.ranges)//2]
+
+    if distancia_frontal < 0.5:
+        self.get_logger().warn("¡PARED DETECTADA! Frenando...")
+        # Aquí enviaríamos una velocidad de 0 al robot
 ```
+
+---
+
+## Resumen de la Fase 3
+-   **Hemos dado un ojo al robot** (URDF).
+-   **Hemos conectado el ojo al cerebro** (Bridge).
+-   **Hemos aprendido a visualizar sus pensamientos** (RViz2).
 
 ---
 
 ## Siguientes Pasos
 
-Continúa con la **[Fase 4: Mapeo y SLAM](Fase_4_Mapeo_y_SLAM.md)** para empezar a construir un mapa con los datos del LiDAR.
+Continúa con la **[Fase 4: Mapeo y SLAM](Fase_4_Mapeo_y_SLAM.md)**. Usaremos esta "vista" para dibujar un mapa de toda la habitación.
