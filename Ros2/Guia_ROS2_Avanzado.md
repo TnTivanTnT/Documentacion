@@ -58,24 +58,7 @@ Workspace ROS2
 
 ---
 
-### Crear paquete de interfaces
-
-### Estructura del paquete de interfaces
-
-```
-mis_interfaces/
-├── CMakeLists.txt
-├── package.xml
-├── msg/
-│   ├── MiMensaje.msg
-│   └── Coordenada.msg
-├── srv/
-│   └── MiServicio.srv
-└── action/
-    └── MiAccion.action
-```
-
-### Crear paquete de interfaces
+### Proceso para Crear un Paquete de Interfaces
 
 ```bash
 cd ~/ros2_ws/src
@@ -158,13 +141,14 @@ ament_package()
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
-  
-  <depend>geometry_msgs</depend>
-  
-  <exec_depend>rosidl_default_runtime</exec_depend>
-  
-  <member_of_group>rosidl_interface_packages</member_of_group>
+ 
+   <build_depend>rosidl_default_generators</build_depend>
+ 
+   <depend>geometry_msgs</depend>
+   
+   <exec_depend>rosidl_default_runtime</exec_depend>
+   
+   <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
     <build_type>ament_cmake</build_type>
@@ -276,9 +260,10 @@ class MiLifecycleNode(LifecycleNode):
 
     def publish_callback(self):
         msg = String()
-        msg.data = f'Mensaje: {self.count}'
-        self.publisher.publish(msg)
-        self.count += 1
+         msg.data = f'Mensaje: {self.count}'
+         if self.publisher is not None:
+            self.publisher.publish(msg)
+         self.count += 1
 
 def main(args=None):
     rclpy.init(args=args)
@@ -310,7 +295,27 @@ ros2 lifecycle set /mi_lifecycle_node deactivate
 
 ### ¿Qué es Composition?
 
-Composition permite ejecutar múltiples nodos en un mismo proceso, reduciendo overhead de comunicación.
+Composition permite ejecutar múltiples nodos en un mismo proceso. Esto elimina la sobrecarga de la comunicación entre procesos (usando serialización, copiado de memoria, etc.), lo que resulta en una comunicación mucho más eficiente.
+
+#### El "Contenedor" de Componentes
+
+En lugar de lanzar cada nodo en su propio proceso del sistema operativo, se lanza un único proceso "contenedor". Luego, los nodos (llamados "componentes" en este contexto) se cargan dinámicamente en este contenedor.
+
+```
+       Proceso A (Nodo 1)         Proceso B (Nodo 2)
+ Memoria   <-- Copia -->   Memoria   <-- (LENTO) -->   Red/DDS
++---------+             +---------+
+|  Nodo 1 | --- Topic --- |  Nodo 2 |
++---------+             +---------+
+
+       Proceso Contenedor
++---------------------------------+
+| Memoria Compartida (CERO-COPIA) |
+| +---------+         +---------+ |
+| |  Nodo 1 |---Topic---|  Nodo 2 | |
+| +---------+         +---------+ |
++---------------------------------+
+```
 
 ### Ventajas
 
@@ -326,8 +331,8 @@ Composition permite ejecutar múltiples nodos en un mismo proceso, reduciendo ov
 #!/usr/bin/env python3
 import rclpy
 from rclpy.executors import SingleThreadedExecutor
-from mi_paquete.publisher import PublisherNode
-from mi_paquete.subscriber import SubscriberNode
+from mis_ejercicios.publisher import PublisherNode
+from mis_ejercicios.subscriber import SubscriberNode
 
 def main(args=None):
     rclpy.init(args=args)
@@ -357,8 +362,8 @@ if __name__ == '__main__':
 #!/usr/bin/env python3
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
-from mi_paquete.node1 import Node1
-from mi_paquete.node2 import Node2
+from mis_ejercicios.node1 import Node1
+from mis_ejercicios.node2 import Node2
 
 def main(args=None):
     rclpy.init(args=args)
@@ -466,8 +471,8 @@ self.get_logger().fatal('Mensaje fatal')
 ### Configurar nivel de log
 
 ```bash
-ros2 run mi_paquete mi_nodo --ros-args --log-level debug
-ros2 run mi_paquete mi_nodo --ros-args --log-level mi_nodo:=debug
+ros2 run mis_ejercicios mi_nodo --ros-args --log-level debug
+ros2 run mis_ejercicios mi_nodo --ros-args --log-level mi_nodo:=debug
 ```
 
 ### Análisis de rendimiento
@@ -613,7 +618,47 @@ self.subscription = self.create_subscription(
 | Durability | VOLATILE, TRANSIENT_LOCAL | TRANSIENT_LOCAL para config |
 | Depth | Número | Cola de mensajes |
 
-> 💡 **Práctica:** Aplica buenas prácticas en [Ejercicios ROS2 - Sección 5](Ejercicios_ROS2.md#sección-5-buenas-prácticas)
+#### Tabla de Compatibilidad de QoS
+
+Uno de los problemas más comunes en ROS2 es cuando un publicador y un suscriptor no se conectan a pesar de que el topic existe. Esto suele deberse a perfiles de QoS incompatibles.
+
+La regla más importante se refiere a la fiabilidad (`Reliability`):
+
+| Publisher \ Subscriber | Reliable | Best Effort |
+| :--- | :---: | :---: |
+| **Reliable** | ✅ **OK** | ✅ **OK** |
+| **Best Effort**| ❌ **NO COMPATIBLE** | ✅ **OK** |
+
+- Un publicador `Reliable` (fiable) **puede** enviar datos a un suscriptor `Best Effort` (mejor esfuerzo). El publicador intentará entregar los mensajes de forma fiable, pero el suscriptor no lo requiere.
+- Un publicador `Best Effort` **no puede** satisfacer a un suscriptor `Reliable`, porque el suscriptor requiere garantías que el publicador no ofrece.
+
+> 🐛 **Troubleshooting:** Si tus nodos no se comunican, ¡revisa la QoS! Usa `ros2 topic info /mi_topic -v` para ver los perfiles de QoS de los publicadores y suscriptores de un topic.
+
+### Rosbag2: Grabar y Reproducir Datos
+
+`rosbag` es una herramienta esencial para el debugging y las pruebas. Te permite grabar los mensajes publicados en los topics y reproducirlos más tarde.
+
+**Grabar datos:**
+```bash
+# Graba todos los topics
+ros2 bag record -a
+
+# Graba solo los topics especificados
+ros2 bag record /topic1 /topic2
+```
+
+**Reproducir datos:**
+```bash
+# El archivo de la bolsa es un directorio
+ros2 bag play nombre_de_la_bolsa_xxx
+```
+
+**Inspeccionar una bolsa:**
+```bash
+ros2 bag info nombre_de_la_bolsa_xxx
+```
+
+> 💡 **Práctica:** Aplica buenas prácticas y explora `rosbag` en [Ejercicios ROS2 - Sección 5](Ejercicios_ROS2.md#sección-5-buenas-prácticas)
 
 ---
 

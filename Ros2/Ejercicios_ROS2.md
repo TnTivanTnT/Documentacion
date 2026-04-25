@@ -8,9 +8,9 @@ Este documento contiene ejercicios prácticos para reforzar los conceptos de las
 
 ## Nivel Principiante
 
-### Sección 1: Instalación y Configuración
+### Sección 1: Verificación del Entorno
 
-> 📖 **Teoría:** [Guía ROS2 Principiante - Instalación](Guia_ROS2_Principiante.md#instalación-de-ros2-humble)
+> 📖 **Teoría:** [Guía ROS2 Principiante - Primeros Pasos](Guia_ROS2_Principiante.md#primeros-pasos-instalación-y-entorno)
 
 #### Ejercicio 1.1: Verificar instalación
 ```bash
@@ -278,6 +278,50 @@ ros2 pkg xml demo_nodes_cpp
 
 ---
 
+### Sección 6: Troubleshooting Común
+
+> 🐛 **¿Problemas?** Consulta esta sección si algo no funciona como esperas.
+
+#### Problema 1: `colcon build` falla o no encuentra el paquete
+
+**Síntoma:** `colcon` se queja de que no puede encontrar un paquete o hay errores de compilación.
+
+**Soluciones:**
+1.  **Sourcing:** ¿Hiciste `source /opt/ros/humble/setup.bash` en tu terminal? ¿Y `source install/setup.bash` desde tu workspace?
+2.  **Dependencias:** Asegúrate de que todas las dependencias están listadas en `package.xml`.
+3.  **Clean build:** A veces, un build corrupto causa problemas. Intenta limpiar:
+    ```bash
+    cd ~/ros2_ws
+    rm -rf build install log
+    colcon build
+    source install/setup.bash
+    ```
+
+#### Problema 2: `ros2 run` no encuentra tu nodo
+
+**Síntoma:** El comando `ros2 run mi_paquete mi_nodo` dice `Executable 'mi_nodo' not found`.
+
+**Soluciones:**
+1.  **Sourcing:** ¡El más común! Asegúrate de haber hecho `source install/setup.bash` en la terminal **actual**.
+2.  **Entry Point:** Revisa tu `setup.py`. ¿El `entry_points` está bien configurado?
+    ```python
+    'console_scripts': [
+        'mi_nodo = mi_paquete.nombre_archivo:main',
+    ],
+    ```
+3.  **Compilación:** ¿Compilaste el paquete después de crear el nodo? `colcon build --packages-select mi_paquete`.
+
+#### Problema 3: El topic, servicio o acción no aparece
+
+**Síntoma:** `ros2 topic list` no muestra tu topic o `ros2 service call` no funciona.
+
+**Soluciones:**
+1.  **Nodo corriendo:** ¿Está el nodo que publica el topic o provee el servicio realmente corriendo? Usa `ros2 node list`.
+2.  **Nombres:** Revisa que los nombres del topic/servicio coincidan exactamente entre el publisher/servidor y el subscriber/cliente.
+3.  **QoS (Calidad de Servicio):** Especialmente con topics, si el publicador y suscriptor tienen perfiles de QoS incompatibles (ej. uno `RELIABLE` y otro `BEST_EFFORT`), no se conectarán. Asegúrate de que sean compatibles.
+
+---
+
 ## Nivel Intermedio
 
 ### Sección 1: Services
@@ -299,6 +343,10 @@ ros2 service call /add_two_ints example_interfaces/srv/AddTwoInts "{a: 5, b: 3}"
 
 #### Ejercicio 1.3: Crear service server
 
+<details>
+<summary>Haz clic para ver una posible solución</summary>
+
+**`mis_ejercicios/mis_ejercicios/suma_server.py`**
 ```python
 #!/usr/bin/env python3
 import rclpy
@@ -326,9 +374,15 @@ def main(args=None):
 if __name__ == '__main__':
     main()
 ```
+No olvides añadir la dependencia `example_interfaces` en tu `package.xml` y el `entry_point` en `setup.py`.
+</details>
 
 #### Ejercicio 1.4: Crear service client
 
+<details>
+<summary>Haz clic para ver una posible solución</summary>
+
+**`mis_ejercicios/mis_ejercicios/suma_client.py`**
 ```python
 #!/usr/bin/env python3
 import sys
@@ -356,17 +410,19 @@ def main(args=None):
     client = SumaClient()
     
     if len(sys.argv) < 3:
-        print("Uso: suma_client <a> <b>")
+        client.get_logger().error("Uso: ros2 run mis_ejercicios suma_client <a> <b>")
         return
     
     response = client.enviar_request(int(sys.argv[1]), int(sys.argv[2]))
-    client.get_logger().info(f'Resultado: {response.sum}')
+    client.get_logger().info(f'Resultado de {sys.argv[1]} + {sys.argv[2]} = {response.sum}')
     client.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
 ```
+No olvides añadir el `entry_point` en `setup.py`.
+</details>
 
 ---
 
@@ -383,8 +439,12 @@ ros2 interface show example_interfaces/action/Fibonacci
 
 #### Ejercicio 2.2: Action Server de cuenta regresiva
 
+<details>
+<summary>Haz clic para ver una posible solución</summary>
+
 ```python
 #!/usr/bin/env python3
+import time
 import rclpy
 from rclpy.action import ActionServer
 from rclpy.node import Node
@@ -395,37 +455,54 @@ class CuentaRegresivaServer(Node):
         super().__init__('cuenta_regresiva_server')
         self._action_server = ActionServer(
             self,
-            Fibonacci,
+            Fibonacci, # Usaremos Fibonacci para el tipo, aunque la lógica es de cuenta atrás
             'cuenta_regresiva',
             self.execute_callback)
+        self.get_logger().info("Action Server de Cuenta Regresiva listo.")
 
     def execute_callback(self, goal_handle):
         self.get_logger().info('Iniciando cuenta regresiva...')
+        
         feedback_msg = Fibonacci.Feedback()
         feedback_msg.partial_sequence = []
         
         objetivo = goal_handle.request.order
         
         for i in range(objetivo, 0, -1):
+            if goal_handle.is_cancel_requested:
+                goal_handle.canceled()
+                self.get_logger().info('Goal cancelado')
+                return Fibonacci.Result()
+
             feedback_msg.partial_sequence.append(i)
             goal_handle.publish_feedback(feedback_msg)
             self.get_logger().info(f'Feedback: {i}')
+            time.sleep(1)
             
         goal_handle.succeed()
+        
         result = Fibonacci.Result()
         result.sequence = feedback_msg.partial_sequence
+        self.get_logger().info('Cuenta regresiva completada.')
         return result
 
 def main(args=None):
     rclpy.init(args=args)
     server = CuentaRegresivaServer()
-    rclpy.spin(server)
+    # Usamos un executor Multi-hilo para que el time.sleep no bloquee el nodo
+    from rclpy.executors import MultiThreadedExecutor
+    executor = MultiThreadedExecutor()
+    rclpy.spin(server, executor=executor)
 
 if __name__ == '__main__':
     main()
 ```
+</details>
 
 #### Ejercicio 2.3: Action Client
+
+<details>
+<summary>Haz clic para ver una posible solución</summary>
 
 ```python
 #!/usr/bin/env python3
@@ -444,26 +521,49 @@ class CuentaRegresivaClient(Node):
         goal_msg = Fibonacci.Goal()
         goal_msg.order = orden
 
+        self.get_logger().info('Esperando al Action Server...')
         self._action_client.wait_for_server()
-        return self._action_client.send_goal_async(
+
+        self.get_logger().info(f'Enviando goal para cuenta regresiva desde {orden}...')
+        self._send_goal_future = self._action_client.send_goal_async(
             goal_msg, 
             feedback_callback=self.feedback_callback)
+        
+        self._send_goal_future.add_done_callback(self.goal_response_callback)
+
+    def goal_response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info('Goal rechazado :(')
+            return
+
+        self.get_logger().info('Goal aceptado :)')
+
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.get_result_callback)
+
+    def get_result_callback(self, future):
+        result = future.result().result
+        self.get_logger().info(f'Resultado final: {result.sequence}')
+        rclpy.shutdown()
 
     def feedback_callback(self, feedback_msg):
         feedback = feedback_msg.feedback
-        self.get_logger().info(f'Progreso: {feedback.partial_sequence[-1]}')
+        self.get_logger().info(f'Progreso: {feedback.partial_sequence[-1]}...')
 
 def main(args=None):
     rclpy.init(args=args)
     client = CuentaRegresivaClient()
     
     orden = int(sys.argv[1]) if len(sys.argv) > 1 else 10
-    future = client.send_goal(orden)
-    rclpy.spin_until_future_complete(client, future)
+    client.send_goal(orden)
+    
+    rclpy.spin(client)
 
 if __name__ == '__main__':
     main()
 ```
+</details>
 
 ---
 
@@ -707,7 +807,7 @@ mkdir -p msg srv action
 #### Ejercicio 1.2: Crear mensaje personalizado
 
 Crear `msg/RobotStatus.msg`:
-```
+```text
 string nombre
 float64 posicion_x
 float64 posicion_y
@@ -718,7 +818,7 @@ bool activo
 #### Ejercicio 1.3: Crear servicio personalizado
 
 Crear `srv/CalcularRuta.srv`:
-```
+```text
 # Request
 geometry_msgs/Point inicio
 geometry_msgs/Point destino
@@ -732,7 +832,7 @@ string mensaje
 
 #### Ejercicio 1.4: Configurar CMakeLists.txt y package.xml
 
-Ver la guía para configuración completa.
+> 📖 **Instrucciones detalladas:** La configuración completa de `CMakeLists.txt` y `package.xml` para interfaces está en la [Guía Avanzada - Sección de Interfaces](Guia_ROS2_Avanzado.md#interfaces-personalizadas). Es crucial seguir esos pasos para que ROS2 genere el código correctamente.
 
 #### Ejercicio 1.5: Usar interfaces
 ```bash
@@ -897,41 +997,60 @@ self.subscription = self.create_subscription(
 
 ---
 
-## Proyecto Final
+## Reto Final Integrador: El Guardián del Almacén
 
-### Sistema de monitoreo de robot
+Este proyecto final combina todo lo que has aprendido: interfaces personalizadas, actions, services, parámetros y launch files.
 
-Crea un sistema completo que incluya:
+### Objetivo
 
-1. **Nodo de simulación de sensor**: Publica datos ficticios de sensores
-2. **Nodo de procesamiento**: Recibe datos y calcula métricas
-3. **Nodo de control**: Recibe métricas y genera comandos
-4. **Service de configuración**: Permite cambiar parámetros
-5. **Action de calibración**: Ejecuta secuencia de calibración
-6. **Launch file**: Inicia todo el sistema
-7. **Interfaces personalizadas**: Mensajes y servicios propios
+Crear un sistema simple para un robot "Guardián" que patrulla un área, reporta su estado y puede ser reconfigurado en tiempo real.
 
-```bash
-ros2 pkg create --build-type ament_python robot_monitor
-```
+### Componentes del Sistema
 
-**Estructura sugerida:**
-```
-robot_monitor/
-├── robot_monitor/
-│   ├── __init__.py
-│   ├── sensor_node.py
-│   ├── processor_node.py
-│   ├── control_node.py
-│   ├── config_service.py
-│   └── calibration_action.py
-├── launch/
-│   └── system.launch.py
-├── config/
-│   └── params.yaml
-├── package.xml
-└── setup.py
-```
+1.  **Paquete de Interfaces (`guardian_interfaces`)**
+    -   **Mensaje:** `RobotStatus.msg` con `bateria` (float32), `posicion` (string), `estado` (string: "Patrullando", "En base", "Alerta").
+    -   **Acción:** `Patrullar.action` con `puntos_patrulla` (string[]) como goal, `punto_actual` (string) como feedback y `ruta_completada` (bool) como result.
+    -   **Servicio:** `CambiarModo.srv` con `modo` (string: "normal", "ahorro") como request y `confirmacion` (bool) como response.
+
+2.  **Paquete del Robot (`guardian_robot`)**
+    -   **Nodo Guardián (`guardian_node.py`):**
+        -   Publica su estado en un topic `/robot_status` usando el mensaje `RobotStatus`.
+        -   Ofrece el servicio `/cambiar_modo` para ajustar su velocidad.
+        -   Ofrece el action server `/patrullar` para iniciar una secuencia de patrulla.
+        -   Tiene un **parámetro** `velocidad_patrulla` que cambia según el modo del servicio.
+    -   **Nodo de Control (`control_station.py`):**
+        -   Un cliente que puede llamar al servicio para cambiar el modo.
+        -   Un cliente que puede enviar un goal a la acción de patrullar.
+        -   Un suscriptor que monitoriza el `/robot_status`.
+
+3.  **Launch File (`start_guardian.launch.py`)**
+    -   Lanza el `guardian_node`.
+    -   Carga los parámetros iniciales desde un archivo `guardian_params.yaml` (ej: `velocidad_patrulla: 1.0`).
+
+### Pasos Sugeridos
+
+1.  **Crea los paquetes:** `ros2 pkg create --build-type ament_cmake guardian_interfaces` y `ros2 pkg create --build-type ament_python guardian_robot`.
+2.  **Define y compila las interfaces:** Crea los archivos `.msg`, `.action` y `.srv`. No olvides modificar `CMakeLists.txt` y `package.xml` de `guardian_interfaces` y compilarlo primero.
+3.  **Desarrolla el `guardian_node`:** Implementa el publicador, el servidor de servicio y el servidor de acción.
+4.  **Desarrolla el `control_station`:** Implementa los clientes y el suscriptor.
+5.  **Crea el `params.yaml` y el `launch file`**.
+6.  **¡Prueba todo el sistema!** Lanza el sistema y usa una segunda terminal para ejecutar `control_station` y ver cómo interactúa con el guardián.
+
+<details>
+<summary>🏆 Checklist de Éxito</summary>
+
+| Criterio | Comando de Verificación | Resultado Esperado |
+| :--- | :--- | :--- |
+| **Interfaces compiladas** | `colcon build --packages-select guardian_interfaces` | El build termina sin errores. |
+| **Mensaje visible** | `ros2 interface show guardian_interfaces/msg/RobotStatus` | Muestra la definición del mensaje. |
+| **Servicio visible** | `ros2 interface show guardian_interfaces/srv/CambiarModo` | Muestra la definición del servicio. |
+| **Acción visible** | `ros2 interface show guardian_interfaces/action/Patrullar` | Muestra la definición de la acción. |
+| **Nodo Guardián se lanza** | `ros2 launch guardian_robot start_guardian.launch.py` | El nodo se inicia y muestra los logs. |
+| **Topic de estado funciona**| `ros2 topic echo /robot_status` | Se reciben mensajes `RobotStatus`. |
+| **Servicio funciona** | `ros2 service call /cambiar_modo guardian_interfaces/srv/CambiarModo "{modo: 'ahorro'}"` | El nodo guardián loguea el cambio de modo. |
+| **Acción funciona** | `ros2 action send_goal /patrullar guardian_interfaces/action/Patrullar "{puntos_patrulla: ['Punto A', 'Punto B']}"` | El nodo guardián loguea el inicio de la patrulla y envía feedback. |
+
+</details>
 
 ---
 

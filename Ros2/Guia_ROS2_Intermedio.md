@@ -120,7 +120,7 @@ if __name__ == '__main__':
 ros2 service call /add_two_ints example_interfaces/srv/AddTwoInts "{a: 5, b: 3}"
 ```
 
-> 💡 **Práctica:** Ejercita services en [Ejercicios ROS2 - Sección 1](Ejercicios_ROS2.md#sección-1-services)
+> 💡 **Práctica:** Ejercita services en [Ejercicios ROS2 - Nivel Intermedio](Ejercicios_ROS2.md#sección-1-services)
 
 ---
 
@@ -142,9 +142,35 @@ Las actions son para tareas de larga duración con feedback continuo.
 
 | Componente | Descripción |
 |------------|-------------|
-| Goal | Objetivo a alcanzar |
-| Feedback | Progreso periódico |
-| Result | Resultado final |
+| Goal | El objetivo que el cliente quiere que el servidor alcance. |
+| Feedback | Mensajes periódicos del servidor para informar sobre el progreso. |
+| Result | Un mensaje final del servidor cuando la tarea se completa. |
+
+#### Flujo de Comunicación de un Action
+
+Las Actions siguen un protocolo más complejo que los services, diseñado para tareas no instantáneas.
+
+```
+ Cliente                                  Servidor
+    |                                          |
+    | --- 1. Enviar Goal (ej: "navegar a X") --> |
+    |                                          |
+    | <-- 2. Aceptar/Rechazar Goal (Ack) ------ |
+    |                                          |
+    | <-- 3. Feedback ("25% completado") ------ |
+    |                                          |
+    | <-- 3. Feedback ("50% completado") ------ |
+    |                                          |
+    | <-- 4. Resultado ("Destino alcanzado") -- |
+    |                                          |
+```
+
+1.  **Goal Request**: El cliente envía un objetivo.
+2.  **Goal Acceptance**: El servidor confirma que ha recibido y aceptado el objetivo.
+3.  **Feedback**: Mientras trabaja, el servidor envía actualizaciones de progreso.
+4.  **Result**: Una vez finalizada la tarea, el servidor envía el resultado final.
+
+> Este modelo es ideal para tareas como navegación, manipulación de objetos o secuencias de procesamiento largas.
 
 ### Ver tipos de actions
 
@@ -162,6 +188,8 @@ import rclpy
 from rclpy.action import ActionServer
 from rclpy.node import Node
 from example_interfaces.action import Fibonacci
+
+from rclpy.executors import MultiThreadedExecutor
 
 class FibonacciActionServer(Node):
     def __init__(self):
@@ -191,7 +219,10 @@ class FibonacciActionServer(Node):
 def main(args=None):
     rclpy.init(args=args)
     server = FibonacciActionServer()
-    rclpy.spin(server)
+    
+    # Se usa un MultiThreadedExecutor para evitar que el cálculo bloquee el nodo.
+    executor = MultiThreadedExecutor()
+    rclpy.spin(server, executor=executor)
 
 if __name__ == '__main__':
     main()
@@ -244,7 +275,7 @@ if __name__ == '__main__':
 ros2 action send_goal /fibonacci example_interfaces/action/Fibonacci "{order: 5}" --feedback
 ```
 
-> 💡 **Práctica:** Ejercita actions en [Ejercicios ROS2 - Sección 2](Ejercicios_ROS2.md#sección-2-actions)
+> 💡 **Práctica:** Ejercita actions en [Ejercicios ROS2 - Nivel Intermedio](Ejercicios_ROS2.md#sección-2-actions)
 
 ---
 
@@ -339,7 +370,7 @@ ros2 param get /param_node mi_parametro_int
 ros2 param set /param_node mi_parametro_int 100
 ```
 
-> 💡 **Práctica:** Ejercita parámetros en [Ejercicios ROS2 - Sección 3](Ejercicios_ROS2.md#sección-3-parameters)
+> 💡 **Práctica:** Ejercita parámetros en [Ejercicios ROS2 - Nivel Intermedio](Ejercicios_ROS2.md#sección-3-parameters)
 
 ---
 
@@ -374,30 +405,58 @@ def generate_launch_description():
     ])
 ```
 
-### Launch file con argumentos
+### Launch file con argumentos y modularidad
 
+A medida que los sistemas crecen, es útil dividir los launch files y reutilizarlos.
+
+#### Incluir un Launch File dentro de otro
+
+Puedes usar `IncludeLaunchDescription` para construir sistemas complejos a partir de componentes más pequeños.
+
+**`robot_base.launch.py` (Componente base):**
 ```python
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 def generate_launch_description():
     return LaunchDescription([
-        DeclareLaunchArgument(
-            'frecuencia',
-            default_value='1.0',
-            description='Frecuencia de publicación'
+        Node(package='robot_driver', executable='driver_node', name='base_driver'),
+        Node(package='robot_sensors', executable='lidar_node', name='lidar')
+    ])
+```
+
+**`robot_completo.launch.py` (Launch file principal):**
+```python
+from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_ros.substitutions import FindPackageShare
+import os
+
+def generate_launch_description():
+    # Ruta al launch file que queremos incluir
+    base_launch_path = os.path.join(
+        FindPackageShare('mi_robot_base'), # Asume que robot_base.launch.py está en otro paquete
+        'launch',
+        'robot_base.launch.py'
+    )
+
+    return LaunchDescription([
+        # Incluimos el launch file base
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(base_launch_path)
         ),
+        
+        # Añadimos nodos adicionales específicos de este sistema
         Node(
-            package='mi_paquete',
-            executable='publisher_node',
-            parameters=[{
-                'frecuencia': LaunchConfiguration('frecuencia')
-            }]
+            package='robot_navigation',
+            executable='nav_node',
+            name='navigation'
         )
     ])
 ```
+
+> 💡 **Buena práctica:** Crea launch files pequeños y reutilizables para cada "capacidad" de tu robot (ej: `sensores.launch.py`, `movimiento.launch.py`) y únelos en un launch file principal.
 
 ### Estructura de launch files
 
@@ -431,131 +490,7 @@ ros2 launch mi_paquete mi_launch.py frecuencia:=2.0
 | `ros2 launch <pkg> <file> arg:=valor` | Con argumentos |
 | `ros2 pkg list | grep mi_paquete` | Verifica paquete |
 
-> 💡 **Práctica:** Crea launch files en [Ejercicios ROS2 - Sección 4](Ejercicios_ROS2.md#sección-4-launch-files)
-
----
-
-## Workspace y Paquetes
-
-### Estructura de un workspace
-
-```
-ros2_ws/
-├── build/
-├── install/
-├── log/
-└── src/
-    ├── paquete_1/
-    │   ├── package.xml
-    │   ├── setup.py
-    │   ├── paquete_1/
-    │   │   └── __init__.py
-    │   └── resource/
-     └── paquete_2/
-```
-
-### Elegir tipo de paquete
-
-Antes de crear un paquete, decide el build type:
-
-| Quiero crear... | Build type |
-|-----------------|------------|
-| Nodos en Python | `ament_python` |
-| Nodos en C++ | `ament_cmake` |
-| Interfaces (msg/srv/action) | `ament_cmake` |
-| Librería C++ | `ament_cmake` |
-
-> 💡 **Flujo típico con Python:**
-> 1. Paquete de interfaces: `ament_cmake` (para msg/srv/action)
-> 2. Paquete de nodos: `ament_python` (para tus nodos Python)
-> 3. Ambos paquetes conviven en el mismo workspace
-
-### Crear un paquete Python
-
-```bash
-cd ~/ros2_ws/src
-ros2 pkg create --build-type ament_python mi_paquete
-```
-
-### package.xml
-
-```xml
-<?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
-<package format="3">
-  <name>mi_paquete</name>
-  <version>0.0.1</version>
-  <description>Mi paquete ROS2</description>
-  <maintainer email="usuario@email.com">Usuario</maintainer>
-  <license>MIT</license>
-  
-  <depend>rclpy</depend>
-  <depend>std_msgs</depend>
-  
-  <test_depend>ament_copyright</test_depend>
-  <test_depend>ament_flake8</test_depend>
-  <test_depend>ament_pep257</test_depend>
-  
-  <export>
-    <build_type>ament_python</build_type>
-  </export>
-</package>
-```
-
-### setup.py
-
-```python
-from setuptools import setup
-
-package_name = 'mi_paquete'
-
-setup(
-    name=package_name,
-    version='0.0.1',
-    packages=[package_name],
-    data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml']),
-    ],
-    install_requires=['setuptools'],
-    zip_safe=True,
-    maintainer='Usuario',
-    maintainer_email='usuario@email.com',
-    description='Mi paquete ROS2',
-    license='MIT',
-    tests_require=['pytest'],
-    entry_points={
-        'console_scripts': [
-            'mi_nodo = mi_paquete.mi_nodo:main',
-            'publisher = mi_paquete.publisher:main',
-            'subscriber = mi_paquete.subscriber:main',
-        ],
-    },
-)
-```
-
-### Flujo de trabajo
-
-```bash
-cd ~/ros2_ws
-colcon build
-source install/setup.bash
-ros2 run mi_paquete mi_nodo
-```
-
-### Comandos de paquetes
-
-| Comando | Descripción |
-|---------|-------------|
-| `ros2 pkg create` | Crea paquete |
-| `ros2 pkg list` | Lista paquetes |
-| `ros2 pkg prefix <paquete>` | Ruta del paquete |
-| `ros2 pkg xml <paquete>` | Muestra package.xml |
-| `colcon build` | Construye workspace |
-| `colcon build --symlink-install` | Con enlaces simbólicos |
-
-> 💡 **Práctica:** Crea tu workspace en [Ejercicios ROS2 - Sección 5](Ejercicios_ROS2.md#sección-5-workspace-y-paquetes)
+> 💡 **Práctica:** Crea launch files en [Ejercicios ROS2 - Nivel Intermedio](Ejercicios_ROS2.md#sección-4-launch-files)
 
 ---
 
