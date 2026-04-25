@@ -68,9 +68,10 @@ Abre `description/robot.urdf` y añade estos bloques antes de la última línea 
 Para que los puntos aparezcan en RViz2, necesitas tener tres terminales funcionando a la vez:
 
 ### Terminal 1: El Puente (Bridge)
-Pasa los datos de Gazebo a ROS 2.
 ```bash
-ros2 run ros_gz_bridge parameter_bridge /scan@sensor_msgs/msg/LaserScan@ignition.msgs.LaserScan
+ros2 run ros_gz_bridge parameter_bridge \
+  /scan@sensor_msgs/msg/LaserScan@ignition.msgs.LaserScan \
+  /model/mi_robot/joint_state@sensor_msgs/msg/JointState@ignition.msgs.Model --ros-args -r /model/mi_robot/joint_state:=/joint_states
 ```
 
 ### Terminal 2: El Publicador de Estado (Robot State Publisher)

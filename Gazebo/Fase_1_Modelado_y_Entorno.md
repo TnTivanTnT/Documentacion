@@ -102,6 +102,10 @@ Crea el archivo **`description/robot.urdf`** y pega este código completo. Es un
       <wheel_radius>0.1</wheel_radius>
       <topic>cmd_vel</topic>
     </plugin>
+
+    <!-- PLUGIN PARA PUBLICAR LA POSICIÓN DE LAS RUEDAS (Joint States) -->
+    <plugin filename="ignition-gazebo-joint-state-publisher-system" name="ignition::gazebo::systems::JointStatePublisher">
+    </plugin>
   </gazebo>
 
 </robot>
