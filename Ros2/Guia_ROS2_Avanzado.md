@@ -290,25 +290,28 @@ class MiLifecycleNode(LifecycleNode):
     def on_activate(self, state: LifecycleState) -> TransitionCallbackReturn:
         self.get_logger().info('Activando...')
         self.timer = self.create_timer(1.0, self.publish_callback)
-        return super().on_activate(state)
+        return TransitionCallbackReturn.SUCCESS
 
     def on_deactivate(self, state: LifecycleState) -> TransitionCallbackReturn:
         self.get_logger().info('Desactivando...')
-        self.timer.cancel()
-        return super().on_deactivate(state)
+        if self.timer is not None:
+            self.destroy_timer(self.timer)
+            self.timer = None
+        return TransitionCallbackReturn.SUCCESS
 
     def on_cleanup(self, state: LifecycleState) -> TransitionCallbackReturn:
         self.get_logger().info('Limpiando...')
-        self.publisher.destroy()
-        self.publisher = None
+        if self.publisher is not None:
+            self.destroy_publisher(self.publisher)
+            self.publisher = None
         return TransitionCallbackReturn.SUCCESS
 
     def publish_callback(self):
         msg = String()
-         msg.data = f'Mensaje: {self.count}'
-         if self.publisher is not None:
+        msg.data = f'Mensaje: {self.count}'
+        if self.publisher is not None:
             self.publisher.publish(msg)
-         self.count += 1
+        self.count += 1
 
 def main(args=None):
     rclpy.init(args=args)
@@ -344,8 +347,7 @@ Además de la línea de comandos, puedes controlar el estado de un lifecycle nod
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from rclpy.lifecycle.client import LifecycleClient
-from rclpy.lifecycle.transition import Transition
+from lifecycle_msgs.msg import Transition
 from lifecycle_msgs.srv import ChangeState, GetState
 
 class LifecycleManager(Node):

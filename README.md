@@ -1,6 +1,6 @@
 # Índice Documentación
 
-Este índice organiza toda la documentación técnica para nuevos integrantes del equipo de robótica.
+Este repositorio contiene resúmenes técnicos y guías de repaso sobre diversas herramientas. La documentación está organizada por módulos independientes.
 
 ---
 
@@ -19,12 +19,24 @@ Este índice organiza toda la documentación técnica para nuevos integrantes de
 ## ROS2 (Humble + rclpy)
 
 ### Guías
+- [Instalación de ROS2 Humble](./Ros2/Instalacion_ROS2.md)
 - [Guía ROS2 - Principiante](./Ros2/Guia_ROS2_Principiante.md)
 - [Guía ROS2 - Intermedio](./Ros2/Guia_ROS2_Intermedio.md)
 - [Guía ROS2 - Avanzado](./Ros2/Guia_ROS2_Avanzado.md)
 
 ### Ejercicios Prácticos
 - [Ejercicios Prácticos ROS2](./Ros2/Ejercicios_ROS2.md)
+
+---
+
+## Gazebo (Ignition Fortress)
+
+### Guías del Robot Diferencial
+- [Fase 1: Modelado y Entorno](./Gazebo/Fase_1_Modelado_y_Entorno.md)
+- [Fase 2: Teleoperación y Bridge](./Gazebo/Fase_2_Teleoperacion_y_Bridge.md)
+- [Fase 3: Sensores y Percepción](./Gazebo/Fase_3_Sensores_y_Percepcion.md)
+- [Fase 4: Mapeo y SLAM](./Gazebo/Fase_4_Mapeo_y_SLAM.md)
+- [Fase 5: Navegación Autónoma](./Gazebo/Fase_5_Navegacion_Autonoma.md)
 
 ---
 
@@ -52,19 +64,11 @@ Este índice organiza toda la documentación técnica para nuevos integrantes de
 
 ---
 
-## Recursos
+## Recursos de Consulta Rápida
 
-| Área | Nivel | Contenido |
-|------|-------|-----------|
-| Linux | Principiante | Navegación, archivos, permisos |
-| Linux | Intermedio | Pipes, grep, procesos |
-| Linux | Avanzado | Scripting, systemd |
-| ROS2 | Principiante | Nodos, topics, CLI |
-| ROS2 | Intermedio | Services, actions, launch |
-| ROS2 | Avanzado | Interfaces custom, lifecycle |
-| GitHub | Principiante | Init, commit, push |
-| GitHub | Intermedio | Branches, merge, PRs |
-| GitHub | Avanzado | Rebase, cherry-pick, hooks |
-| Markdown | Principiante | Sintaxis básica, enlaces, imágenes |
-| Markdown | Intermedio | Código, tablas, citas |
-| Markdown | Avanzado | HTML, Obsidian, extensiones |
+| Área | Herramientas Clave |
+|------|-------|
+| Linux | `sudo`, `tmux`, `ssh`, `htop`, `grep` |
+| ROS2 | `rclpy`, `colcon`, `rviz2`, `ros_gz_bridge` |
+| GitHub | `switch`, `restore`, `PRs`, `Actions` |
+| Markdown | `Mermaid`, `Badges`, `Obsidian` |

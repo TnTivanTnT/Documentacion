@@ -9,6 +9,7 @@
 - [Párrafos y Saltos de Línea](#párrafos-y-saltos-de-línea)
 - [Énfasis y Formato](#énfasis-y-formato)
 - [Listas](#listas)
+- [Separadores Horizontales](#separadores-horizontales)
 - [Enlaces](#enlaces)
 - [Imágenes](#imágenes)
 - [Comentarios](#comentarios)
@@ -304,7 +305,21 @@ Resultado:
 - [ ] Tarea pendiente
 - [ ] Otra tarea
 
-> 💡 **Práctica:** Ejercita listas en [Ejercicios Markdown - Sección 5](Ejercicios_Markdown.md#sección-5-listas)
+---
+
+## Separadores Horizontales
+
+Usa tres o más asteriscos (`***`), guiones (`---`) o guiones bajos (`___`) en una línea por sí solos para crear una línea divisoria.
+
+```markdown
+Sección A
+
+---
+
+Sección B
+```
+
+> 💡 **Práctica:** Ejercita listas y separadores en [Ejercicios Markdown - Sección 2](Ejercicios_Markdown.md#sección-2-estructura-y-listas)
 
 ---
 
@@ -364,7 +379,7 @@ Resultado: <https://www.ejemplo.com>
 [[Nombre de nota#Sección|Texto]]
 ```
 
-> 💡 **Práctica:** Ejercita enlaces en [Ejercicios Markdown - Sección 6](Ejercicios_Markdown.md#sección-6-enlaces)
+> 💡 **Práctica:** Ejercita enlaces en [Ejercicios Markdown - Sección 3](Ejercicios_Markdown.md#sección-3-enlaces-e-imágenes)
 
 ---
 
@@ -414,7 +429,7 @@ Resultado: <https://www.ejemplo.com>
 <img src="imagen.png" alt="descripción" width="200" height="100">
 ```
 
-> 💡 **Práctica:** Ejercita imágenes en [Ejercicios Markdown - Sección 7](Ejercicios_Markdown.md#sección-7-imágenes)
+> 💡 **Práctica:** Ejercita imágenes en [Ejercicios Markdown - Sección 3](Ejercicios_Markdown.md#sección-3-enlaces-e-imágenes)
 
 ---
 
@@ -438,7 +453,7 @@ Aquí hay texto visible.
 Más texto visible.
 ```
 
-> 💡 **Práctica:** Ejercita comentarios en [Ejercicios Markdown - Sección 8](Ejercicios_Markdown.md#sección-8-comentarios)
+> 💡 **Práctica:** Refuerza la sintaxis básica en [Ejercicios Markdown - Nivel Principiante](Ejercicios_Markdown.md#nivel-principiante)
 
 ---
 

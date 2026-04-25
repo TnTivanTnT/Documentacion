@@ -219,9 +219,9 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        # Añadir archivos launch
+        # Añadir archivos launch (Asegúrate de crear la carpeta launch/ en la raíz del paquete)
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
-        # Añadir archivos de configuración
+        # Añadir archivos de configuración (Asegúrate de crear la carpeta config/ en la raíz del paquete)
         (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
     ],
     install_requires=['setuptools'],
@@ -467,9 +467,13 @@ class MiNodo(Node):
 def main(args=None):
     rclpy.init(args=args)
     nodo = MiNodo()
-    rclpy.spin(nodo)
-    nodo.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(nodo)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        nodo.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
@@ -544,7 +548,7 @@ from std_msgs.msg import String
 class PublisherNode(Node):
     def __init__(self):
         super().__init__('publisher_node')
-        self.publisher = self.create_publisher(String, 'topic', 10)
+        self.publisher_ = self.create_publisher(String, 'topic', 10)
         timer_period = 0.5
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
@@ -552,7 +556,7 @@ class PublisherNode(Node):
     def timer_callback(self):
         msg = String()
         msg.data = f'Hola mundo: {self.i}'
-        self.publisher.publish(msg)
+        self.publisher_.publish(msg)
         self.get_logger().info(f'Publicando: "{msg.data}"')
         self.i += 1
 
@@ -691,6 +695,8 @@ Para los desarrolladores de Python, `colcon build --symlink-install` es fundamen
 | Interfaces | `ros2 interface list`, `ros2 interface show` |
 | Build | `colcon build` |
 | Ejecución | `ros2 run`, `ros2 launch` |
+
+> 💡 **Consejo para Principiantes:** En ROS2, casi cada comando que ejecutas (un nodo, un listener, un comando echo) "bloquea" la terminal mientras está funcionando. Acostúmbrate a trabajar con **múltiples pestañas o ventanas de la terminal** simultáneamente (o usa herramientas como `terminator` o `tmux`).
 
 ---
 

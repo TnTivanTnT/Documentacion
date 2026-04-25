@@ -17,12 +17,24 @@ Este documento contiene ejercicios prácticos para reforzar los conceptos de las
 git --version
 git config --global user.name "Tu Nombre"
 git config --global user.email "tu@email.com"
-git config --list
 ```
 
-**Tarea:** Verifica que tu nombre y email estén correctos.
+#### Ejercicio 1.2: Configurar Aliases y Autocorrección
+```bash
+git config --global help.autocorrect 1
+git config --global alias.st status
+git config --global alias.cm "commit -m"
+git config --global alias.sw switch
+git config --global alias.lg "log --oneline --graph --all"
 
-#### Ejercicio 1.2: Configurar SSH
+# Probar los aliases
+git st
+git lg
+```
+
+**Tarea:** Verifica que al escribir `git st` obtienes el mismo resultado que con `git status`.
+
+#### Ejercicio 1.3: Configurar SSH
 ```bash
 ssh-keygen -t ed25519 -C "tu@email.com"
 cat ~/.ssh/id_ed25519.pub
@@ -97,13 +109,19 @@ git status
 > 📖 **Teoría:** [Guía GitHub Principiante - Repositorios](Guia_GitHub_Principiante.md#trabajo-con-repositorios)
 
 #### Ejercicio 3.1: Crear repositorio en GitHub
-1. Ve a github.com y crea un nuevo repositorio llamado `practica_git`
-2. No inicialices con README
+1. **Opción A (Web):** Ve a github.com y crea un nuevo repositorio llamado `practica_git` (no lo inicialices).
+2. **Opción B (CLI - Recomendado):** Si tienes `gh` instalado:
+   ```bash
+   gh repo create practica_git --public
+   ```
 
 #### Ejercicio 3.2: Conectar y subir
 ```bash
 cd ~/practica_git
+# Si usaste la Opción A (Web), añade el remoto manualmente:
 git remote add origin git@github.com:tu-usuario/practica_git.git
+# Si usaste la Opción B (CLI), el remoto ya debería estar configurado.
+
 git remote -v
 git branch -M main
 git push -u origin main
@@ -174,11 +192,11 @@ git log -p
 echo "error" > test.txt
 git add test.txt
 
-# Sacar del staging
+# Sacar del staging (quitar el 'add')
 git restore --staged test.txt
 git status
 
-# Descartar cambios
+# Descartar cambios en el archivo (volver al estado del último commit)
 git restore test.txt
 git status
 ```
@@ -196,31 +214,31 @@ git status
 cd ~/practica_git
 
 git branch
-git checkout -b feature/nueva-funcion
+git switch -c feature/nueva-funcion
 git branch
 
 echo "def nueva_funcion(): pass" >> utils.py
 git add utils.py
 git commit -m "feat: añadir nueva_funcion"
 
-git checkout main
+git switch main
 cat utils.py  # Sin nueva_funcion
 
-git checkout feature/nueva-funcion
+git switch feature/nueva-funcion
 cat utils.py  # Con nueva_funcion
 ```
 
 #### Ejercicio 1.2: Múltiples branches
 ```bash
-git checkout main
-git checkout -b feature/otra-funcion
+git switch main
+git switch -c feature/otra-funcion
 
 echo "def otra_funcion(): pass" >> utils.py
 git add utils.py
 git commit -m "feat: añadir otra_funcion"
 
-git checkout main
-git checkout -b docs/readme
+git switch main
+git switch -c docs/readme
 
 echo "Documentación del proyecto" >> README.md
 git add README.md
@@ -233,7 +251,7 @@ git log --oneline --graph --all
 ```bash
 git branch
 git branch -a
-git checkout main
+git switch main
 git branch -d feature/nueva-funcion
 git branch -D feature/otra-funcion  # Forzar si no mergeado
 git branch
@@ -248,35 +266,35 @@ git branch
 #### Ejercicio 2.1: Fast-forward merge
 ```bash
 cd ~/practica_git
-git checkout main
-git checkout -b feature/simple
+git switch main
+git switch -c feature/simple
 
 echo "simple" > simple.txt
 git add simple.txt
 git commit -m "feat: añadir archivo simple"
 
-git checkout main
+git switch main
 git merge feature/simple
 git log --oneline --graph
 ```
 
 #### Ejercicio 2.2: Three-way merge
 ```bash
-git checkout main
-git checkout -b feature/branch-a
+git switch main
+git switch -c feature/branch-a
 
 echo "rama A" > conflicto.txt
 git add conflicto.txt
 git commit -m "feat: crear conflicto.txt en A"
 
-git checkout main
-git checkout -b feature/branch-b
+git switch main
+git switch -c feature/branch-b
 
 echo "rama B" > conflicto.txt
 git add conflicto.txt
 git commit -m "feat: crear conflicto.txt en B"
 
-git checkout main
+git switch main
 git merge feature/branch-a
 git merge feature/branch-b  # Habrá conflicto
 
@@ -285,14 +303,14 @@ git log --oneline --graph
 
 #### Ejercicio 2.3: Merge con --no-ff
 ```bash
-git checkout main
-git checkout -b feature/importante
+git switch main
+git switch -c feature/importante
 
 echo "importante" > importante.txt
 git add importante.txt
 git commit -m "feat: añadir archivo importante"
 
-git checkout main
+git switch main
 git merge --no-ff feature/importante
 git log --oneline --graph
 ```
@@ -306,8 +324,8 @@ git log --oneline --graph
 #### Ejercicio 3.1: Crear PR desde CLI
 ```bash
 cd ~/practica_git
-git checkout main
-git checkout -b feature/pr-test
+git switch main
+git switch -c feature/pr-test
 
 echo "contenido para PR" > pr_test.txt
 git add pr_test.txt
@@ -333,20 +351,20 @@ gh pr checkout 1
 #### Ejercicio 4.1: Crear conflicto intencional
 ```bash
 cd ~/practica_git
-git checkout main
+git switch main
 
-git checkout -b feature/conflicto-a
+git switch -c feature/conflicto-a
 echo "Versión A" > conflicto.txt
 git add conflicto.txt
 git commit -m "feat: versión A"
 
-git checkout main
-git checkout -b feature/conflicto-b
+git switch main
+git switch -c feature/conflicto-b
 echo "Versión B" > conflicto.txt
 git add conflicto.txt
 git commit -m "feat: versión B"
 
-git checkout main
+git switch main
 git merge feature/conflicto-a
 git merge feature/conflicto-b  # Conflicto!
 ```
@@ -391,7 +409,7 @@ git remote -v
 #### Ejercicio 5.2: Sincronizar con upstream
 ```bash
 git fetch upstream
-git checkout main
+git switch main
 git merge upstream/main
 ```
 
@@ -412,24 +430,24 @@ gh issue list
 #### Ejercicio 1.1: Rebase básico
 ```bash
 cd ~/practica_git
-git checkout main
-git checkout -b feature/rebase-test
+git switch main
+git switch -c feature/rebase-test
 
 echo "commit 1" > rebase1.txt && git add . && git commit -m "feat: commit 1"
 echo "commit 2" > rebase2.txt && git add . && git commit -m "feat: commit 2"
 echo "commit 3" > rebase3.txt && git add . && git commit -m "feat: commit 3"
 
-git checkout main
+git switch main
 echo "nuevo en main" > main_nuevo.txt && git add . && git commit -m "feat: nuevo en main"
 
-git checkout feature/rebase-test
+git switch feature/rebase-test
 git rebase main
 git log --oneline --graph
 ```
 
 #### Ejercicio 1.2: Rebase interactivo (squash)
 ```bash
-git checkout -b feature/squash-test
+git switch -c feature/squash-test
 
 echo "a" > a.txt && git add . && git commit -m "feat: a"
 echo "b" > b.txt && git add . && git commit -m "feat: b"
@@ -459,21 +477,21 @@ Guardar y editar mensaje combinado.
 #### Ejercicio 2.1: Cherry-pick básico
 ```bash
 cd ~/practica_git
-git checkout main
-git checkout -b feature/cherry-source
+git switch main
+git switch -c feature/cherry-source
 
 echo "cherry 1" > cherry1.txt && git add . && git commit -m "feat: cherry 1"
 echo "cherry 2" > cherry2.txt && git add . && git commit -m "feat: cherry 2"
 echo "cherry 3" > cherry3.txt && git add . && git commit -m "feat: cherry 3"
 
-git log --oneline
+git lg
 # Copia el hash del commit "cherry 2"
 
-git checkout main
-git checkout -b feature/cherry-dest
+git switch main
+git switch -c feature/cherry-dest
 
 git cherry-pick <hash-cherry-2>
-git log --oneline
+git lg
 ls
 ```
 
@@ -486,7 +504,7 @@ ls
 #### Ejercicio 3.1: Stash básico
 ```bash
 cd ~/practica_git
-git checkout main
+git switch main
 
 echo "trabajo en progreso" > wip.txt
 git status
@@ -513,12 +531,12 @@ git stash drop
 echo "cambio 1" >> wip.txt
 git stash
 
-git checkout -b otro-trabajo
+git switch -c otro-trabajo
 echo "otro trabajo" > otro.txt
 git add otro.txt
 git commit -m "feat: otro trabajo"
 
-git checkout main
+git switch main
 git stash pop
 ```
 
@@ -598,24 +616,24 @@ chmod +x .git/hooks/commit-msg
 #### Ejercicio 5.1: Usar reflog
 ```bash
 git reflog
-git log --oneline -5
+git lg -5
 ```
 
 #### Ejercicio 5.2: Recuperar commit "perdido"
 ```bash
 git reset --hard HEAD~3
-git log --oneline
+git lg
 
 git reflog
 # Busca el commit anterior
 
 git reset --hard <commit-hash>
-git log --oneline
+git lg
 ```
 
 #### Ejercicio 5.3: Bisect para encontrar bug
 ```bash
-git checkout main
+git switch main
 git bisect start
 git bisect bad HEAD
 git bisect good <commit-bueno>
@@ -629,9 +647,21 @@ git blame utils.py
 git blame -L 1,5 utils.py
 ```
 
+#### Ejercicio 5.5: Gestionar Submódulos (Dependencias)
+```bash
+cd ~/proyecto_final
+# Añadir un repositorio como dependencia
+git submodule add https://github.com/github/gitignore.git external/gitignore
+git status
+git commit -m "chore: añadir submódulo de gitignore"
+
+# Verificar
+ls -la external/gitignore
+```
+
 ---
 
-### Sección 6: GitHub Actions
+## Sección 6: GitHub Actions
 
 > 📖 **Teoría:** [Guía GitHub Avanzado - Actions](Guia_GitHub_Avanzado.md#github-actions)
 
@@ -759,7 +789,7 @@ git commit -m "feat: inicializar proyecto"
 
 2. **Crear branches y desarrollo:**
 ```bash
-git checkout -b feature/utils
+git switch -c feature/utils
 
 cat > utils.py << 'EOF'
 def helper():
@@ -769,7 +799,7 @@ EOF
 git add utils.py
 git commit -m "feat: añadir utils"
 
-git checkout main
+git switch main
 git merge --no-ff feature/utils
 ```
 

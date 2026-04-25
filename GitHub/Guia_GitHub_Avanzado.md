@@ -197,12 +197,11 @@ Stash guarda cambios temporales sin hacer commit, permitiendo cambiar de branch.
 | `git stash list` | Lista todos los stashes |
 | `git stash show` | Muestra cambios del último stash |
 | `git stash show -p` | Muestra diff del stash |
-| `git stash apply` | Aplica último stash (mantiene) |
+| `git stash apply` | Aplica último stash (**lo mantiene en la lista**) |
 | `git stash apply stash@{2}` | Aplica stash específico |
-| `git stash pop` | Aplica y elimina último stash |
-| `git stash drop` | Elimina último stash |
-| `git stash drop stash@{2}` | Elimina stash específico |
-| `git stash clear` | Elimina todos los stashes |
+| `git stash pop` | Aplica y **elimina** el último stash |
+
+> 💡 **Tip:** Se recomienda usar `git stash apply` si no estás seguro de si habrá conflictos. Si algo sale mal, tus cambios siguen guardados en el stash. Una vez verificado que todo está bien, puedes borrarlo con `git stash drop`.
 
 ### Flujo típico
 
@@ -341,8 +340,8 @@ git reset HEAD@{5}
 
 ```bash
 git reflog
-git checkout <commit-hash>
-git checkout -b recovery-branch
+git switch --detach <commit-hash>  # Explora el commit en modo 'detached'
+git switch -c recovery-branch       # Crea una rama nueva para salvarlo
 ```
 
 ### Reset vs Revert
@@ -373,6 +372,19 @@ git bisect good  # o git bisect bad
 # Repetir hasta encontrar
 git bisect reset
 ```
+
+## Seguridad: Commits Firmados
+
+Para garantizar que nadie suplante tu identidad, puedes firmar tus commits usando tu clave SSH. GitHub mostrará un check verde de **"Verified"**.
+
+```bash
+# Configurar Git para usar tu clave SSH para firmar
+git config --global commit.gpgsign true
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519.pub
+```
+
+> 💡 **Tip:** Esto es fundamental en proyectos con muchos colaboradores para asegurar la integridad de la autoría del código.
 
 ### Blame
 
@@ -406,14 +418,58 @@ git filter-branch --tree-filter 'rm -f passwords.txt' HEAD
 
 ### Git LFS (Large File Storage)
 
+Git no está diseñado para manejar archivos binarios grandes (videos, mallas 3D pesadas, logs de sensores). **Git LFS** reemplaza estos archivos con punteros de texto, manteniendo el repositorio ligero.
+
+> ⚠️ **Importante en Robótica:** Usa LFS para archivos `.bag`, modelos de Gazebo complejos (`.dae`, `.stl` de alta resolución) y modelos de entrenamiento de IA. ¡Evitarás que el `git clone` tarde horas!
+
 ```bash
 git lfs install
-git lfs track "*.psd"
-git lfs track "*.zip"
+git lfs track "*.bag"
+git lfs track "*.dae"
 git add .gitattributes
 ```
 
 > 💡 **Práctica:** Ejercita comandos avanzados en [Ejercicios GitHub - Sección 5](Ejercicios_GitHub.md#sección-5-git-avanzado)
+
+## Emergencias: Guía de Primeros Auxilios
+
+| Situación | Solución |
+| :--- | :--- |
+| **"Escribí mal el mensaje del último commit"** | `git commit --amend -m "Nuevo mensaje"` |
+| **"Hice el commit en la rama equivocada"** | `git reset --soft HEAD~1` -> `git switch rama_correcta` -> `git commit` |
+| **"Borré una rama por error y tenía trabajo"** | `git reflog` -> buscar hash -> `git switch -c rama_recuperada <hash>` |
+| **"Metí un archivo que no debía (ej. .env)"** | `git rm --cached <archivo>` -> añadir al `.gitignore` -> commit |
+| **"Quiero deshacer todo mi trabajo local"** | `git reset --hard origin/main` (¡Cuidado, borra todo!) |
+
+## Git Worktrees: Desarrollo en Paralelo
+
+Los Worktrees te permiten tener múltiples ramas abiertas en diferentes carpetas al mismo tiempo, compartiendo el mismo repositorio `.git`.
+
+```bash
+# Crea una carpeta nueva para trabajar en otra rama simultáneamente
+git worktree add ../hotfix-branch feature/hotfix
+# Listar worktrees activos
+git worktree list
+# Eliminar worktree al terminar
+git worktree remove ../hotfix-branch
+```
+
+> 💡 **Caso de uso:** Estás en medio de un desarrollo de 3 horas y te piden corregir un error urgente en `main`. En lugar de hacer `stash`, crea un worktree, arregla el bug en otra carpeta, súbelo y borra la carpeta. ¡Sin tocar tu rama actual!
+
+---
+
+## Git Submodules: Gestionar Dependencias Externas
+
+En robótica, solemos usar librerías de terceros (drivers, sensores). Los submódulos permiten incluir esos repositorios dentro del tuyo.
+
+```bash
+# Añadir un submódulo
+git submodule add https://github.com/usuario/sensor_driver.git
+# Inicializar submódulos al clonar por primera vez
+git clone --recursive <url_tu_repo>
+# Actualizar submódulos
+git submodule update --remote --merge
+```
 
 ---
 

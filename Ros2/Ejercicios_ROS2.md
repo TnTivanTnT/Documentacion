@@ -62,10 +62,18 @@ rqt_graph
 > 📖 **Teoría:** [Guía ROS2 Principiante - Nodos](Guia_ROS2_Principiante.md#nodos-en-ros2)
 
 #### Ejercicio 3.1: Crear workspace y paquete
+
+> ⚠️ **Importante:** Un workspace siempre debe tener una carpeta llamada `src`. Los paquetes **siempre** deben crearse dentro de `src`.
+
 ```bash
+# 1. Crear carpetas (la bandera -p crea la ruta completa)
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws/src
+
+# 2. Crear el paquete (Estando DENTRO de la carpeta src)
 ros2 pkg create --build-type ament_python mis_ejercicios
+
+# 3. Ir a la raíz del workspace para compilar
 cd ~/ros2_ws
 colcon build
 source install/setup.bash
@@ -85,10 +93,7 @@ class NodoBasico(Node):
         super().__init__('nodo_basico')
         self.get_logger().info('¡Mi primer nodo funciona!')
         self.contador = 0
-        self.crear_timer()
-
-    def crear_timer(self):
-        self.timer = self.create_timer(1.0, self.timer_callback)
+        self.timer_ = self.create_timer(1.0, self.timer_callback)
 
     def timer_callback(self):
         self.contador += 1
@@ -152,14 +157,14 @@ from std_msgs.msg import String
 class MiPublisher(Node):
     def __init__(self):
         super().__init__('mi_publisher')
-        self.publisher = self.create_publisher(String, 'mi_topic', 10)
-        self.timer = self.create_timer(0.5, self.timer_callback)
+        self.publisher_ = self.create_publisher(String, 'mi_topic', 10)
+        self.timer_ = self.create_timer(0.5, self.timer_callback)
         self.contador = 0
 
     def timer_callback(self):
         msg = String()
         msg.data = f'Mensaje #{self.contador}'
-        self.publisher.publish(msg)
+        self.publisher_.publish(msg)
         self.get_logger().info(f'Publicado: "{msg.data}"')
         self.contador += 1
 
@@ -191,7 +196,7 @@ from std_msgs.msg import String
 class MiSubscriber(Node):
     def __init__(self):
         super().__init__('mi_subscriber')
-        self.subscription = self.create_subscription(
+        self.subscription_ = self.create_subscription(
             String,
             'mi_topic',
             self.listener_callback,
@@ -240,14 +245,14 @@ from geometry_msgs.msg import Twist
 class VelocidadPublisher(Node):
     def __init__(self):
         super().__init__('velocidad_publisher')
-        self.publisher = self.create_publisher(Twist, '/cmd_vel', 10)
-        self.timer = self.create_timer(0.1, self.timer_callback)
+        self.publisher_ = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.timer_ = self.create_timer(0.1, self.timer_callback)
 
     def timer_callback(self):
         msg = Twist()
         msg.linear.x = 0.5
         msg.angular.z = 0.1
-        self.publisher.publish(msg)
+        self.publisher_.publish(msg)
 
 def main(args=None):
     rclpy.init(args=args)
@@ -359,11 +364,14 @@ ros2 service call /add_two_ints example_interfaces/srv/AddTwoInts "{a: 5, b: 3}"
 
 #### Ejercicio 1.3: Crear service server
 
+Crea un nodo que ofrezca un servicio llamado `/suma` que reciba dos enteros y devuelva su suma.
+
 <details>
 <summary>Haz clic para ver una posible solución</summary>
 
 **`mis_ejercicios/mis_ejercicios/suma_server.py`**
 ```python
+
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
@@ -372,7 +380,7 @@ from example_interfaces.srv import AddTwoInts
 class SumaServer(Node):
     def __init__(self):
         super().__init__('suma_server')
-        self.srv = self.create_service(AddTwoInts, 'suma', self.suma_callback)
+        self.service_ = self.create_service(AddTwoInts, 'suma', self.suma_callback)
         self.get_logger().info('Service Server listo en /suma')
 
     def suma_callback(self, request, response):
@@ -394,10 +402,13 @@ def main(args=None):
 if __name__ == '__main__':
     main()
 ```
-No olvides añadir la dependencia `example_interfaces` en tu `package.xml` y el `entry_point` en `setup.py`.
+> No olvides añadir la dependencia `example_interfaces` en tu `package.xml` y el `entry_point` en `setup.py`.
+
 </details>
 
 #### Ejercicio 1.4: Crear service client
+
+Crea un nodo cliente que llame al servicio `/suma` y muestre el resultado.
 
 <details>
 <summary>Haz clic para ver una posible solución</summary>
@@ -413,15 +424,15 @@ from example_interfaces.srv import AddTwoInts
 class SumaClient(Node):
     def __init__(self):
         super().__init__('suma_client')
-        self.cli = self.create_client(AddTwoInts, 'suma')
-        while not self.cli.wait_for_service(timeout_sec=1.0):
+        self.client_ = self.create_client(AddTwoInts, 'suma')
+        while not self.client_.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Esperando servicio...')
         self.req = AddTwoInts.Request()
 
     def enviar_request(self, a, b):
         self.req.a = a
         self.req.b = b
-        self.future = self.cli.call_async(self.req)
+        self.future = self.client_.call_async(self.req)
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
 
@@ -431,11 +442,20 @@ def main(args=None):
     
     if len(sys.argv) < 3:
         client.get_logger().error("Uso: ros2 run mis_ejercicios suma_client <a> <b>")
+        client.destroy_node()
+        rclpy.shutdown()
         return
 
     try:
-        response = client.enviar_request(int(sys.argv[1]), int(sys.argv[2]))
-        client.get_logger().info(f'Resultado de {sys.argv[1]} + {sys.argv[2]} = {response.sum}')
+        a = int(sys.argv[1])
+        b = int(sys.argv[2])
+        response = client.enviar_request(a, b)
+        if response is not None:
+            client.get_logger().info(f'Resultado de {a} + {b} = {response.sum}')
+        else:
+            client.get_logger().error('La llamada al servicio falló')
+    except ValueError:
+        client.get_logger().error("Los argumentos deben ser números enteros.")
     except Exception as e:
         client.get_logger().error(f'Error durante la llamada al servicio: {e}')
     finally:
@@ -445,7 +465,7 @@ def main(args=None):
 if __name__ == '__main__':
     main()
 ```
-No olvides añadir el `entry_point` en `setup.py`.
+> No olvides añadir el `entry_point` en `setup.py`.
 </details>
 
 #### Ejercicio 1.5: Depurando un Servicio que no Responde
@@ -454,7 +474,8 @@ Este ejercicio simula otro problema común: un cliente de servicio intenta llama
 
 **El problema:** El script del cliente se queda "colgado" o falla si el servidor no está listo inmediatamente.
 
-**Nodo Servidor (`servidor_lento.py`):**
+**Paso 1: Nodo Servidor (`servidor_lento.py`)**
+
 Este servidor simula un arranque lento.
 
 ```python
@@ -469,7 +490,7 @@ class ServidorLento(Node):
         super().__init__('servidor_lento')
         self.get_logger().info('Iniciando servidor, pero tomará 5 segundos...')
         time.sleep(5)
-        self.srv = self.create_service(AddTwoInts, 'suma_lenta', self.suma_callback)
+        self.service_ = self.create_service(AddTwoInts, 'suma_lenta', self.suma_callback)
         self.get_logger().info('¡Servidor lento listo!')
 
     def suma_callback(self, request, response):
@@ -491,7 +512,8 @@ if __name__ == '__main__':
     main()
 ```
 
-**Nodo Cliente (`cliente_impaciente.py` con el error):**
+**Paso 2: Nodo Cliente (`cliente_impaciente.py` con el error)**
+
 Este cliente no espera a que el servicio esté disponible.
 
 ```python
@@ -503,7 +525,7 @@ from example_interfaces.srv import AddTwoInts
 class ClienteImpaciente(Node):
     def __init__(self):
         super().__init__('cliente_impaciente')
-        self.cli = self.create_client(AddTwoInts, 'suma_lenta')
+        self.client_ = self.create_client(AddTwoInts, 'suma_lenta')
         # ERROR: No espera a que el servicio esté listo
         self.get_logger().info('Cliente listo, llamando al servicio inmediatamente.')
         self.req = AddTwoInts.Request()
@@ -512,7 +534,7 @@ class ClienteImpaciente(Node):
         self.req.a = a
         self.req.b = b
         # Esto probablemente fallará o se quedará colgado
-        self.future = self.cli.call_async(self.req)
+        self.future = self.client_.call_async(self.req)
         rclpy.spin_until_future_complete(self, self.future)
         return self.future.result()
 
@@ -535,7 +557,7 @@ if __name__ == '__main__':
     main()
 ```
 
-**Pasos para Depurar:**
+**Paso 3: Pasos para Depurar**
 
 1.  Añade los `entry_points` para los nodos nuevos y recompila.
 2.  **Ejecuta el cliente primero:**
@@ -551,34 +573,56 @@ if __name__ == '__main__':
     ros2 run mis_ejercicios cliente_impaciente
     ```
     El resultado es el mismo. El cliente no es lo suficientemente "paciente".
-4.  **Investiga y Soluciona:** La solución es hacer que el cliente espere activamente a que el servicio esté disponible antes de intentar llamarlo. Modifica `cliente_impaciente.py` para usar `self.cli.wait_for_service()`.
+4.  **Investiga y Soluciona:** La solución es hacer que el cliente espere activamente a que el servicio esté disponible antes de intentar llamarlo. Modifica `cliente_impaciente.py` para usar `self.client_.wait_for_service()`.
 
 <details>
 <summary>Haz clic para ver la solución</summary>
 
-La clave es el bucle `while not self.cli.wait_for_service(timeout_sec=1.0):` que ya usamos en el cliente robusto.
+La clave es el bucle `while not self.client_.wait_for_service(timeout_sec=1.0):` que ya usamos en el cliente robusto.
 
 **Solución en `cliente_impaciente.py`:**
 
 ```python
-# ... imports ...
+# ... (imports y clase ClienteImpaciente) ...
 
-class ClienteImpaciente(Node):
     def __init__(self):
         super().__init__('cliente_impaciente')
-        self.cli = self.create_client(AddTwoInts, 'suma_lenta')
+        self.client_ = self.create_client(AddTwoInts, 'suma_lenta')
         
         # SOLUCIÓN: Esperar activamente al servicio
-        while not self.cli.wait_for_service(timeout_sec=1.0):
+        while not self.client_.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Servicio "suma_lenta" no disponible, esperando...')
             
         self.get_logger().info('¡Servicio encontrado! Cliente listo.')
         self.req = AddTwoInts.Request()
 
-    # ... el resto del código es igual ...
+    def enviar_request(self, a, b):
+        self.req.a = a
+        self.req.b = b
+        self.future = self.client_.call_async(self.req)
+        rclpy.spin_until_future_complete(self, self.future)
+        return self.future.result()
+
+def main(args=None):
+    rclpy.init(args=args)
+    client = ClienteImpaciente()
+    try:
+        response = client.enviar_request(1, 2)
+        if response:
+            client.get_logger().info(f'Respuesta recibida: {response.sum}')
+        else:
+            client.get_logger().error('Fallo al llamar al servicio.')
+    except Exception as e:
+        client.get_logger().error(f'Error: {e}')
+    finally:
+        client.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
 ```
 
-Con este cambio, el cliente esperará pacientemente a que `servidor_lento` termine su inicialización de 5 segundos antes de enviar la petición, y todo funcionará correctamente.
+> Con este cambio, el cliente esperará pacientemente a que `servidor_lento` termine su inicialización de 5 segundos antes de enviar la petición, y todo funcionará correctamente.
 
 </details>
 
@@ -657,6 +701,9 @@ def main(args=None):
     finally:
         server.destroy_node()
         rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
 ```
 </details>
 
@@ -729,6 +776,9 @@ def main(args=None):
         client.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
 ```
 </details>
 
@@ -758,8 +808,8 @@ class NodoConParams(Node):
         self.frecuencia = self.get_parameter('frecuencia').get_parameter_value().double_value
         self.contador = self.get_parameter('contador_inicial').get_parameter_value().integer_value
         
-        self.publisher = self.create_publisher(String, 'topic_params', 10)
-        self.timer = self.create_timer(1.0 / self.frecuencia, self.timer_callback)
+        self.publisher_ = self.create_publisher(String, 'topic_params', 10)
+        self.timer_ = self.create_timer(1.0 / self.frecuencia, self.timer_callback)
         
         self.get_logger().info(f'Mensaje: {self.mensaje}')
         self.get_logger().info(f'Frecuencia: {self.frecuencia} Hz')
@@ -767,7 +817,7 @@ class NodoConParams(Node):
     def timer_callback(self):
         msg = String()
         msg.data = f'{self.mensaje}: {self.contador}'
-        self.publisher.publish(msg)
+        self.publisher_.publish(msg)
         self.contador += 1
 
 def main(args=None):
@@ -809,7 +859,7 @@ ros2 param set /nodo_con_params frecuencia 0.5
 
 #### Ejercicio 4.1: Crear launch file básico
 
-Crear `mis_ejercicios/launch/mi_launch.py`:
+Crear `mis_ejercicios/launch/mi_launch.launch.py`:
 
 ```python
 from launch import LaunchDescription
@@ -844,7 +894,7 @@ setup(
     # ... código existente ...
     data_files=[
         # ... código existente ...
-        (os.path.join('share', package_name), glob('launch/*.py')),
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
     ],
     # ... resto del código ...
 )
@@ -884,8 +934,8 @@ def generate_launch_description():
 
 #### Ejercicio 4.3: Ejecutar launch files
 ```bash
-ros2 launch mis_ejercicios mi_launch.py
-ros2 launch mis_ejercicios mi_launch.py frecuencia:=2.0 mensaje:=Test
+ros2 launch mis_ejercicios mi_launch.launch.py
+ros2 launch mis_ejercicios mi_launch.launch.py frecuencia:=2.0 mensaje:=Test
 ```
 
 ---
@@ -1166,7 +1216,7 @@ qos = QoSProfile(
     depth=10
 )
 
-self.subscription = self.create_subscription(
+self.subscription_ = self.create_subscription(
     String, 'topic', self.callback, qos)
 ```
 
@@ -1222,7 +1272,7 @@ class ConfigSubscriber(Node):
     def __init__(self):
         super().__init__('config_subscriber')
         # QoS por defecto (incorrecta para este caso)
-        self.subscription = self.create_subscription(
+        self.subscription_ = self.create_subscription(
             String,
             'config_topic',
             self.listener_callback,
@@ -1290,7 +1340,7 @@ class ConfigSubscriber(Node):
             durability=DurabilityPolicy.TRANSIENT_LOCAL
         )
         
-        self.subscription = self.create_subscription(
+        self.subscription_ = self.create_subscription(
             String,
             'config_topic',
             self.listener_callback,

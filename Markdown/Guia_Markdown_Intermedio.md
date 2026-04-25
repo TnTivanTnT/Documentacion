@@ -102,7 +102,7 @@ def funcion():
 ```
 ````
 
-> 💡 **Práctica:** Ejercita bloques de código en [Ejercicios Markdown - Sección 1](Ejercicios_Markdown.md#sección-1-bloques-de-código)
+> 💡 **Práctica:** Ejercita bloques de código en [Ejercicios Markdown - Nivel Intermedio](Ejercicios_Markdown.md#sección-1-bloques-de-código)
 
 ---
 
@@ -161,7 +161,7 @@ Resultado:
 > — Leonardo da Vinci
 ```
 
-> 💡 **Práctica:** Ejercita citas en [Ejercicios Markdown - Sección 2](Ejercicios_Markdown.md#sección-2-citas-en-bloque)
+> 💡 **Práctica:** Ejercita citas en [Ejercicios Markdown - Nivel Intermedio](Ejercicios_Markdown.md#sección-3-citas-y-notas)
 
 ---
 
@@ -240,7 +240,7 @@ Dato 1 | Dato 2 | Dato 3
 </table>
 ```
 
-> 💡 **Práctica:** Ejercita tablas en [Ejercicios Markdown - Sección 3](Ejercicios_Markdown.md#sección-3-tablas)
+> 💡 **Práctica:** Ejercita tablas en [Ejercicios Markdown - Nivel Intermedio](Ejercicios_Markdown.md#sección-2-tablas)
 
 ---
 
@@ -308,20 +308,22 @@ Sección siguiente
 : Definición del término 2
 ```
 
+> ⚠️ **Nota de compatibilidad:** Las listas de definición con `:` no son soportadas nativamente por GitHub. Para GitHub, es mejor usar negrita y salto de línea, o HTML puro.
+
 ### Ejemplo completo
 
 ```markdown
-**ROS2**
-: Robot Operating System 2, framework de desarrollo robótico
+**Hardware**
+: Partes físicas de un ordenador (procesador, memoria, etc.)
 
-**Nodo**
-: Unidad de procesamiento en ROS2
+**Software**
+: Programas y reglas informáticas que ejecutan tareas
 
-**Topic**
-: Canal de comunicación para mensajes
+**Nube (Cloud)**
+: Servidores remotos que almacenan y procesan datos
 ```
 
-> 💡 **Práctica:** Ejercita listas de definición en [Ejercicios Markdown - Sección 5](Ejercicios_Markdown.md#sección-5-listas-de-definición)
+> 💡 **Práctica:** Ejercita listas de definición en [Ejercicios Markdown - Nivel Intermedio](Ejercicios_Markdown.md#sección-3-citas-y-notas)
 
 ---
 
@@ -357,13 +359,12 @@ Primera nota[^1] y segunda nota[^2].
 ### Ejemplo práctico
 
 ```markdown
-ROS2 usa DDS[^dds] como middleware de comunicación.
+Este documento explica cómo desarrollar Software[^1].
 
-[^dds]: Data Distribution Service, estándar OMG para 
-sistemas distribuidos de tiempo real.
+[^1]: Conjunto de programas, instrucciones y reglas informáticas.
 ```
 
-> 💡 **Práctica:** Ejercita notas al pie en [Ejercicios Markdown - Sección 6](Ejercicios_Markdown.md#sección-6-notas-al-pie)
+> 💡 **Práctica:** Ejercita notas al pie en [Ejercicios Markdown - Nivel Intermedio](Ejercicios_Markdown.md#sección-3-citas-y-notas)
 
 ---
 
@@ -381,13 +382,15 @@ La documentación está en HTML y CSS.
 ### Ejemplo
 
 ```markdown
-Usamos ROS2 con rclpy para desarrollo.
+El diseño se basa en HTML y CSS.
 
-*[ROS2]: Robot Operating System 2
-*[rclpy]: ROS Client Library for Python
+*[HTML]: Hyper Text Markup Language
+*[CSS]: Cascading Style Sheets
 ```
 
-> 💡 **Práctica:** Ejercita abreviaturas en [Ejercicios Markdown - Sección 7](Ejercicios_Markdown.md#sección-7-abreviaturas)
+> ⚠️ **Nota de compatibilidad:** Las abreviaturas son una extensión de "Markdown Extra" y no funcionan en GitHub. Funcionan principalmente en Obsidian y sitios web generados con Jekyll/Hugo.
+
+> 💡 **Práctica:** Ejercita abreviaturas en [Ejercicios Markdown - Nivel Intermedio](Ejercicios_Markdown.md#sección-3-citas-y-notas)
 
 ---
 

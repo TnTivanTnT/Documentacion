@@ -46,6 +46,7 @@ ros2 interface show example_interfaces/srv/AddTwoInts
 
 ```python
 #!/usr/bin/env python3
+import time
 import rclpy
 from rclpy.node import Node
 from example_interfaces.srv import AddTwoInts
@@ -103,27 +104,20 @@ class ServiceClient(Node):
 def main(args=None):
     rclpy.init(args=args)
     client = ServiceClient()
-    
-    # Manejo robusto de argumentos de línea de comandos
-    if len(sys.argv) != 3:
-        client.get_logger().error('Uso: ros2 run <paquete> <nodo> <a> <b>')
-        # Salida limpia
-        client.destroy_node()
-        rclpy.shutdown()
-        return
-
     try:
-        a = int(sys.argv[1])
-        b = int(sys.argv[2])
-    except ValueError:
-        client.get_logger().error('Los argumentos deben ser números enteros.')
-        # Salida limpia
-        client.destroy_node()
-        rclpy.shutdown()
-        return
+        # Manejo robusto de argumentos de línea de comandos
+        if len(sys.argv) != 3:
+            client.get_logger().error('Uso: ros2 run <paquete> <nodo> <a> <b>')
+            return
 
-    # Envío de la solicitud y manejo de la respuesta
-    try:
+        try:
+            a = int(sys.argv[1])
+            b = int(sys.argv[2])
+        except ValueError:
+            client.get_logger().error('Los argumentos deben ser números enteros.')
+            return
+
+        # Envío de la solicitud y manejo de la respuesta
         response = client.send_request(a, b)
         if response:
             client.get_logger().info(f'Resultado: {a} + {b} = {response.sum}')
@@ -216,6 +210,7 @@ ros2 interface show nav2_msgs/action/NavigateToPose
 
 ```python
 #!/usr/bin/env python3
+import time
 import rclpy
 from rclpy.action import ActionServer
 from rclpy.node import Node
@@ -223,41 +218,41 @@ from example_interfaces.action import Fibonacci
 
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
- 
- class FibonacciActionServer(Node):
-     def __init__(self):
-         super().__init__('fibonacci_action_server')
-         # Usar un ReentrantCallbackGroup para permitir el paralelismo real
-         self._action_server = ActionServer(
-             self,
-             Fibonacci,
-             'fibonacci',
-             self.execute_callback,
-             callback_group=ReentrantCallbackGroup())
 
-     def execute_callback(self, goal_handle):
-         self.get_logger().info('Ejecutando goal...')
-         feedback_msg = Fibonacci.Feedback()
-         feedback_msg.partial_sequence = [0, 1]
+class FibonacciActionServer(Node):
+    def __init__(self):
+        super().__init__('fibonacci_action_server')
+        # Usar un ReentrantCallbackGroup para permitir el paralelismo real
+        self._action_server = ActionServer(
+            self,
+            Fibonacci,
+            'fibonacci',
+            self.execute_callback,
+            callback_group=ReentrantCallbackGroup())
 
-         for i in range(1, goal_handle.request.order):
-             # Comprobar si el cliente ha solicitado cancelar la acción
-             if goal_handle.is_cancel_requested:
-                 goal_handle.canceled()
-                 self.get_logger().info('Goal cancelado')
-                 return Fibonacci.Result()
+    def execute_callback(self, goal_handle):
+        self.get_logger().info('Ejecutando goal...')
+        feedback_msg = Fibonacci.Feedback()
+        feedback_msg.partial_sequence = [0, 1]
 
-             feedback_msg.partial_sequence.append(
-                 feedback_msg.partial_sequence[i] + feedback_msg.partial_sequence[i-1])
-             self.get_logger().info(f'Feedback: {feedback_msg.partial_sequence}')
-             goal_handle.publish_feedback(feedback_msg)
-             # Simular un trabajo que toma tiempo
-             time.sleep(1)
+        for i in range(1, goal_handle.request.order):
+            # Comprobar si el cliente ha solicitado cancelar la acción
+            if goal_handle.is_cancel_requested:
+                goal_handle.canceled()
+                self.get_logger().info('Goal cancelado')
+                return Fibonacci.Result()
 
-         goal_handle.succeed()
-         result = Fibonacci.Result()
-         result.sequence = feedback_msg.partial_sequence
-         return result
+            feedback_msg.partial_sequence.append(
+                feedback_msg.partial_sequence[i] + feedback_msg.partial_sequence[i-1])
+            self.get_logger().info(f'Feedback: {feedback_msg.partial_sequence}')
+            goal_handle.publish_feedback(feedback_msg)
+            # Simular un trabajo que toma tiempo
+            time.sleep(1)
+
+        goal_handle.succeed()
+        result = Fibonacci.Result()
+        result.sequence = feedback_msg.partial_sequence
+        return result
 
 def main(args=None):
     rclpy.init(args=args)
@@ -406,6 +401,7 @@ if __name__ == '__main__':
 ### Callback de parámetros
 
 ```python
+from rcl_interfaces.msg import SetParametersResult
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 class ParamNode(Node):

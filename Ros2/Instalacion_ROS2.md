@@ -41,7 +41,7 @@ sudo apt install ros-humble-desktop
 ```
 
 ```bash
-# Barebones, dispositivos sin interfaz gráficas (versiones server)
+# Barebones, dispositivos sin interfaz gráfica (versiones server)
 sudo apt install ros-humble-ros-base
 ```
 
@@ -51,6 +51,24 @@ sudo apt install ros-dev-tools
 # Añadir el source a bash para no tener que hacerlo siempre
 echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 ```
+
+# Verificación de la instalación
+
+Para asegurarte de que todo funciona correctamente, abre dos terminales y ejecuta:
+
+**Terminal 1 (Talker):**
+```bash
+ros2 run demo_nodes_cpp talker
+```
+
+**Terminal 2 (Listener):**
+```bash
+ros2 run demo_nodes_cpp listener
+```
+
+Si ves que los nodos se comunican y envían "Hello World", ¡tu instalación es correcta!
+
+> 💡 **Práctica:** Tienes más pruebas de verificación en [Ejercicios ROS2 - Sección 1](Ejercicios_ROS2.md#sección-1-verificación-del-entorno)
 
 ---
 

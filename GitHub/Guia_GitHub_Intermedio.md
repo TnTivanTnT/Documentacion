@@ -30,10 +30,8 @@ feature           ●──●──●
 | `git branch` | Lista branches locales |
 | `git branch -a` | Lista todos (incluidos remotos) |
 | `git branch <nombre>` | Crea nuevo branch |
-| `git checkout <branch>` | Cambia a branch |
-| `git checkout -b <nombre>` | Crea y cambia a nuevo branch |
-| `git switch <branch>` | Cambia a branch (Git 2.23+) |
-| `git switch -c <nombre>` | Crea y cambia (Git 2.23+) |
+| `git switch <branch>` | Cambia a branch |
+| `git switch -c <nombre>` | Crea y cambia a nuevo branch |
 | `git branch -d <nombre>` | Elimina branch |
 | `git branch -D <nombre>` | Fuerza eliminación |
 | `git branch -m <viejo> <nuevo>` | Renombra branch |
@@ -41,10 +39,10 @@ feature           ●──●──●
 ### Crear y usar branches
 
 ```bash
-git checkout -b feature/nueva-funcionalidad
+git switch -c feature/nueva-funcionalidad  # Crea y cambia a la rama
 git add .
 git commit -m "feat: añadir nueva funcionalidad"
-git checkout main
+git switch main                            # Vuelve a la rama principal
 git merge feature/nueva-funcionalidad
 git branch -d feature/nueva-funcionalidad
 ```
@@ -67,16 +65,6 @@ hotfix/crash-inicio
 release/v1.0.0
 ```
 
-### Ver diferencias entre branches
-
-```bash
-git diff main..feature/rama
-git log main..feature/rama
-git log --oneline --graph --all
-```
-
-> 💡 **Práctica:** Ejercita branching en [Ejercicios GitHub - Sección 1](Ejercicios_GitHub.md#sección-1-branching)
-
 ---
 
 ## Merging
@@ -91,43 +79,20 @@ Merge combina los cambios de dos branches en uno solo.
 |------|-------------|
 | Fast-forward | Avanza el puntero sin crear merge commit |
 | Three-way merge | Crea un commit de fusión |
-| Rebase | Reaplica commits sobre otra base |
+| Squash and Merge| Combina todos los commits en uno solo (Limpia el historial) |
 
 ### Fast-forward merge
 
 ```bash
-git checkout main
+git switch main
 git merge feature/rama
-```
-
-```
-Antes:
-main        ──●──●
-                 \
-feature           ●──●
-
-Después (fast-forward):
-main        ──●──●──●──●
-feature          
 ```
 
 ### Three-way merge
 
 ```bash
-git checkout main
+git switch main
 git merge feature/rama
-```
-
-```
-Antes:
-main        ──●──●──●
-                 \
-feature           ●──●
-
-Después:
-main        ──●──●──●──●──merge
-                 \        ↑
-feature           ●──●──●
 ```
 
 ### Opciones de merge
@@ -142,14 +107,6 @@ feature           ●──●──●
 git merge --no-ff feature/rama
 git merge --squash feature/rama
 ```
-
-### Abortar merge
-
-```bash
-git merge --abort
-```
-
-> 💡 **Práctica:** Ejercita merging en [Ejercicios GitHub - Sección 2](Ejercicios_GitHub.md#sección-2-merging)
 
 ---
 
@@ -173,58 +130,17 @@ git push origin feature/mi-rama
    - Añadir título y descripción
    - Click en "Create pull request"
 
-### Estructura de un buen PR
+### Draft Pull Requests (Borradores)
 
-```markdown
-## Descripción
-Breve descripción de los cambios realizados.
+Si estás trabajando en una funcionalidad larga pero quieres que se vea el progreso sin que se revise todavía:
+1. Al crear el PR en GitHub, haz clic en la flecha junto a "Create Pull Request".
+2. Selecciona **"Create Draft Pull Request"**.
 
-## Cambios realizados
-- Cambio 1
-- Cambio 2
-- Cambio 3
+### Branch Protection (Protección de Ramas)
 
-## Testing
-- [ ] Tests unitarios pasan
-- [ ] Probado en local
-
-## Screenshots (si aplica)
-Capturas de pantalla
-
-## Issues relacionados
-Closes #123
-```
-
-### Comandos relacionados
-
-| Comando | Descripción |
-|---------|-------------|
-| `gh pr create` | Crea PR desde CLI |
-| `gh pr list` | Lista PRs |
-| `gh pr view <num>` | Ver PR |
-| `gh pr checkout <num>` | Checkout de PR |
-| `gh pr merge <num>` | Merge de PR |
-
-### Plantilla de PR
-
-Crear `.github/pull_request_template.md`:
-
-```markdown
-## Descripción
-
-## Tipo de cambio
-- [ ] Bug fix
-- [ ] Nueva funcionalidad
-- [ ] Breaking change
-- [ ] Documentación
-
-## Checklist
-- [ ] Código sigue convenciones
-- [ ] Tests añadidos/actualizados
-- [ ] Documentación actualizada
-```
-
-> 💡 **Práctica:** Crea PRs en [Ejercicios GitHub - Sección 3](Ejercicios_GitHub.md#sección-3-pull-requests)
+Para evitar desastres, el administrador debe configurar reglas en GitHub (`Settings -> Branches -> Add rule`):
+- **Require a pull request before merging:** Nadie puede hacer `push` directo a `main`.
+- **Require status checks to pass:** El código debe compilar antes del merge.
 
 ---
 
@@ -232,21 +148,9 @@ Crear `.github/pull_request_template.md`:
 
 ### ¿Qué es un conflicto?
 
-Un conflicto ocurre cuando Git no puede fusionar automáticamente porque las mismas líneas fueron modificadas en diferentes branches.
+Ocurre cuando Git no puede fusionar automáticamente porque las mismas líneas fueron modificadas en diferentes ramas.
 
-### Identificar conflictos
-
-```bash
-git merge feature/rama
-# Auto-merging archivo.txt
-# CONFLICT (content): Merge conflict in archivo.txt
-```
-
-### Ver archivos en conflicto
-
-```bash
-git status
-```
+> 💡 **Tip:** Usa **Visual Studio Code** para resolver conflictos visualmente con botones. ¡Es mucho más seguro!
 
 ### Formato del conflicto
 
@@ -258,50 +162,17 @@ Código del branch entrante
 >>>>>>> feature/rama
 ```
 
-### Resolver conflicto manualmente
-
-1. Abrir archivo con conflicto
-2. Editar, elegir o combinar código
-3. Eliminar marcadores (`<<<<<<<`, `=======`, `>>>>>>>`)
-4. Stagear archivo resuelto
-5. Completar merge
-
-```bash
-git add archivo_resuelto.txt
-git commit
-```
-
-### Herramientas de resolución
-
-```bash
-git mergetool
-```
-
-### Ver conflictos
-
-```bash
-git diff --name-only --diff-filter=U
-git diff --check
-```
-
-### Estrategias de merge
-
-| Estrategia | Uso |
-|------------|-----|
-| `recursive` | Por defecto |
-| `ours` | Prefiere cambios locales |
-| `theirs` | Prefiere cambios entrantes |
-
-```bash
-git merge -X ours feature/rama
-git merge -X theirs feature/rama
-```
-
-> 💡 **Práctica:** Resuelve conflictos en [Ejercicios GitHub - Sección 4](Ejercicios_GitHub.md#sección-4-resolución-de-conflictos)
-
 ---
 
-## Trabajo Colaborativo
+## Flujo de Trabajo y Buenas Prácticas
+
+### Notas sobre el flujo de trabajo
+
+Para trabajar de forma organizada, es recomendable seguir estas normas:
+1.  **Main es sagrado:** Evitar trabajar directamente sobre `main`. Usar ramas `feature/`.
+2.  **Pull antes de Push:** Hacer un `git pull` antes de empezar y antes de subir cambios para evitar conflictos.
+3.  **PRs pequeños:** Es mejor hacer varios Pull Requests pequeños que uno gigante.
+4.  **Mensajes claros:** Usar el estándar de *Conventional Commits*.
 
 ### Fork vs Branch
 
@@ -315,86 +186,91 @@ git merge -X theirs feature/rama
 
 ```bash
 # 1. Fork en GitHub (UI)
-
 # 2. Clonar tu fork
 git clone https://github.com/tu-usuario/proyecto.git
-cd proyecto
-
 # 3. Añadir upstream
 git remote add upstream https://github.com/original/proyecto.git
-
-# 4. Crear branch
-git checkout -b feature/mi-contribucion
-
-# 5. Hacer cambios y commit
-git add .
-git commit -m "feat: mi contribución"
-
-# 6. Push a tu fork
-git push origin feature/mi-contribucion
-
-# 7. Crear Pull Request en GitHub
-
-# 8. Mantener fork actualizado
+# 4. Sincronizar fork
 git fetch upstream
-git checkout main
-git merge upstream/main
-```
-
-### Sincronizar fork
-
-```bash
-git fetch upstream
-git checkout main
+git switch main
 git merge upstream/main
 git push origin main
 ```
 
-### Mantenerse actualizado
+### Code Review (Revisión de Código)
 
-```bash
-git pull origin main
-git fetch --all
-git branch --set-upstream-to=origin/main main
-```
+Al revisar código, esta es una **Lista de Verificación** útil:
+1.  **Funcionalidad:** ¿El código hace lo que dice que hace?
+2.  **Legibilidad:** ¿Es fácil de entender?
+3.  **Tests:** ¿Hay tests? ¿Pasan todos?
+4.  **Seguridad:** ¿Hay secretos o claves expuestas?
 
-### Code Review
+---
 
-Al revisar código de otros:
+## Estándar: Conventional Commits
 
-1. **Ser constructivo**: Comentarios útiles, no críticos
-2. **Ser específico**: Indicar líneas concretas
-3. **Sugerir soluciones**: No solo problemas
-4. **Verificar**:
-   - Funcionalidad
-   - Calidad de código
-   - Tests
-   - Documentación
+Para que el historial sea profesional y legible, se recomienda este formato: `<tipo>: <descripción>`
+
+| Tipo | Descripción |
+| :--- | :--- |
+| **feat** | Una nueva funcionalidad |
+| **fix** | Una corrección de un error |
+| **docs** | Cambios en la documentación |
+| **style** | Cambios de formato (espacios, comas) |
+| **refactor**| Mejora de código que no cambia el comportamiento |
+| **test** | Añadir o corregir pruebas |
+| **chore** | Tareas de mantenimiento |
+
+---
+
+## Organización y Mantenimiento
 
 ### Issues
 
 ```bash
 gh issue create --title "Bug en navegación" --body "Descripción..."
 gh issue list
-gh issue view 123
-gh issue close 123
 ```
 
-### Referencias en commits
+### Planificación: Milestones y Projects
+
+1.  **Milestones (Hitos):** Agrupan issues y PRs hacia un objetivo específico.
+2.  **GitHub Projects:** Un tablero Kanban para visualizar el progreso de las tareas.
+
+### Gobernanza: CODEOWNERS
+
+Puedes automatizar quién revisa qué creando el archivo `.github/CODEOWNERS`:
+
+```text
+/Ros2/      @usuario-experto
+README.md   @usuario1 @usuario2
+```
+
+### Mantenimiento: Limpieza de Ramas
 
 ```bash
-git commit -m "fix: error de navegación. Closes #42"
-git commit -m "feat: nueva función. Relates #100"
+# Borra ramas locales que ya no existen en el servidor
+git remote prune origin
+# Borra ramas locales que ya fueron mergeadas
+git branch --merged | grep -v "\*" | xargs -n 1 git branch -d
 ```
 
-| Palabra clave | Efecto |
-|---------------|--------|
-| `Closes #123` | Cierra issue al merge |
-| `Fixes #123` | Cierra issue al merge |
-| `Resolves #123` | Cierra issue al merge |
-| `Relates #123` | Solo referencia |
+---
 
-> 💡 **Práctica:** Trabajo colaborativo en [Ejercicios GitHub - Sección 5](Ejercicios_GitHub.md#sección-5-trabajo-colaborativo)
+## Git Tags (Etiquetas)
+
+### Estándar: Versionado Semántico (SemVer)
+
+Formato `X.Y.Z`:
+-   **X (Mayor):** Cambios que rompen compatibilidad.
+-   **Y (Menor):** Nuevas funciones.
+-   **Z (Parche):** Correcciones.
+
+| Comando | Descripción |
+|---------|-------------|
+| `git tag` | Lista todas las etiquetas |
+| `git tag -a v1.0.0 -m "msj"` | Crea etiqueta anotada |
+| `git push origin --tags` | Sube todos los tags |
 
 ---
 
@@ -402,14 +278,14 @@ git commit -m "feat: nueva función. Relates #100"
 
 | Categoría | Comandos |
 |-----------|----------|
-| Branching | `git branch`, `git checkout -b`, `git switch` |
-| Merging | `git merge`, `git merge --no-ff` |
-| Remoto | `git fetch`, `git remote add` |
+| Branching | `git switch`, `git switch -c`, `git branch -d` |
+| Merging | `git merge`, `git merge --squash` |
 | PRs | `gh pr create`, `gh pr list` |
-| Conflictos | Editar manualmente, `git add`, `git commit` |
+| Etiquetas | `git tag`, `git push --tags` |
+| Limpieza | `git remote prune origin` |
 
 ---
 
 ## Siguientes pasos
 
-Continúa con [Guía GitHub - Nivel Avanzado](Guia_GitHub_Avanzado.md) para aprender sobre rebase, cherry-pick y técnicas avanzadas.
+Continúa con [Guía GitHub - Nivel Avanzado](Guia_GitHub_Avanzado.md).

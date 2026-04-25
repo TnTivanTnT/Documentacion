@@ -62,6 +62,28 @@ git config --global user.name "Tu Nombre"
 git config --global user.email "tu@email.com"
 ```
 
+### Configuraciones recomendadas (Paz mental)
+
+```bash
+# Establecer 'main' como rama por defecto para nuevos repositorios
+git config --global init.defaultBranch main
+
+# Activar autocorrección de comandos (ayuda si escribes 'git statsu')
+git config --global help.autocorrect 1
+
+# Colores automáticos en la terminal
+git config --global color.ui auto
+
+# Aliases (Atajos para trabajar más rápido)
+git config --global alias.st status
+git config --global alias.cm "commit -m"
+git config --global alias.br branch
+git config --global alias.sw switch
+git config --global alias.lg "log --oneline --graph --all"
+```
+
+> 💡 **Tip:** Con estos aliases, ahora puedes escribir `git st` en lugar de `git status`, o `git lg` para ver un historial gráfico y compacto de todas las ramas. ¡Ahorrarás mucho tiempo!
+
 ### Configurar editor por defecto
 
 ```bash
@@ -221,6 +243,25 @@ log/
 *~
 ```
 
+### .gitattributes: Gestión de compatibilidad
+
+Si se trabaja entre **Windows** y **Linux**, los saltos de línea pueden corromper el código. Crea un archivo `.gitattributes` en la raíz para forzar un estándar:
+
+```text
+# Forzar saltos de línea de Linux (LF) en archivos de texto
+* text=auto eol=lf
+
+# Asegurar que los scripts siempre tengan saltos de línea de Linux
+*.sh text eol=lf
+*.py text eol=lf
+
+# Los archivos binarios no se tocan
+*.dae binary
+*.stl binary
+```
+
+> 💡 **Tip:** Esto evitará que Git marque archivos enteros como "modificados" solo porque alguien los abrió en Windows.
+
 ### README.md
 
 ```markdown
@@ -258,9 +299,10 @@ MIT
 │ Untracked ├──────────────>│ Staged  ├───────────────>│Committed│
 │  Modified │               │ (Index) │                │        │
 └───────────┘               └─────────┘                └────────┘
-     ▲                                                      │
-     │                   git checkout -- <file>             │
-     └──────────────────────────────────────────────────────┘
+     ▲                             │                        │
+     │      git restore <file>     │   git restore <file>   │
+     └─────────────────────────────┴────────────────────────┘
+            (Descarta cambios no guardados en el Index o HEAD)
 ```
 
 ### Flujo básico diario
@@ -272,6 +314,8 @@ git commit -m "Descripción del cambio"
 git pull origin main
 git push origin main
 ```
+
+> 💡 **Tip:** El comando `git commit -am "mensaje"` combina el `add` y el `commit` en un solo paso, pero **solo funciona para archivos que ya estaban siendo trackeados**. Si creas un archivo nuevo, DEBES usar `git add` primero.
 
 ### Ver historial
 
@@ -288,11 +332,14 @@ git log --since="2 weeks ago"
 
 | Comando | Descripción |
 |---------|-------------|
-| `git checkout -- <file>` | Descarta cambios en archivo |
-| `git restore <file>` | Descarta cambios (Git 2.23+) |
-| `git restore --staged <file>` | Saca del staging |
-| `git reset HEAD <file>` | Saca del staging (anterior) |
+| `git switch <rama>` | Cambiar de rama (Recomendado) |
+| `git restore <archivo>` | Descartar cambios en archivo (Recomendado) |
+| `git restore --staged <archivo>` | Saca del staging |
+| `git checkout <rama>` | Cambiar de rama (Antiguo) |
+| `git checkout -- <archivo>` | Descartar cambios (Antiguo) |
 | `git commit --amend` | Modifica último commit |
+
+> 💡 **Nota de compatibilidad:** Históricamente, `git checkout` se usaba tanto para cambiar de rama como para restaurar archivos. Para evitar confusiones, las versiones modernas de Git introdujeron `git switch` y `git restore`. Ambos métodos funcionan, pero los nuevos son más claros y seguros. ¡Usa los que prefieras!
 
 ### Buenas prácticas de commits
 

@@ -112,7 +112,7 @@ Este **Markdown** funciona dentro del div.
 </div>
 ```
 
-> 💡 **Práctica:** Ejercita HTML en [Ejercicios Markdown - Sección 1](Ejercicios_Markdown.md#sección-1-html-embebido)
+> 💡 **Práctica:** Ejercita HTML y GFM en [Ejercicios Markdown - Nivel Avanzado](Ejercicios_Markdown.md#sección-1-html-y-gfm)
 
 ---
 
@@ -191,7 +191,18 @@ usuario/repo#123
 :robot:
 ```
 
-> 💡 **Práctica:** Ejercita GFM en [Ejercicios Markdown - Sección 2](Ejercicios_Markdown.md#sección-2-github-flavored-markdown)
+### Insignias (Badges) de Escudo
+
+Muy usadas en el inicio de los README para mostrar estados rápidos. Se crean con [Shields.io](https://shields.io/).
+
+```markdown
+![Static Badge](https://img.shields.io/badge/Version-1.0.0-blue)
+![Static Badge](https://img.shields.io/badge/License-MIT-green)
+![Static Badge](https://img.shields.io/badge/Build-Passing-brightgreen)
+```
+
+Resultado:
+![Static Badge](https://img.shields.io/badge/Version-1.0.0-blue) ![Static Badge](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
@@ -219,7 +230,7 @@ usuario/repo#123
 
 ```markdown
 #etiqueta
-#proyecto/eurobot
+#proyecto/investigacion
 #estado/activo
 ```
 
@@ -229,10 +240,10 @@ usuario/repo#123
 ---
 title: Mi Nota
 date: 2024-01-15
-tags: [robotica, ros2]
+tags: [software, documentacion]
 author: Usuario
 ---
-
+```
 # Contenido de la nota
 ```
 
@@ -296,15 +307,15 @@ pie title Distribución
 ```
 ````
 
-### Secuencias
+#### Secuencias
 
 ````markdown
 ```mermaid
 sequenceDiagram
-    Usuario->>Robot: Comando
-    Robot->>Sensor: Leer
-    Sensor-->>Robot: Datos
-    Robot-->>Usuario: Resultado
+    Cliente->>Servidor: Petición
+    Servidor->>Base de Datos: Consultar
+    Base de Datos-->>Servidor: Resultado
+    Servidor-->>Cliente: Respuesta
 ```
 ````
 
@@ -319,7 +330,7 @@ def funcion():
 ```
 ````
 
-> 💡 **Práctica:** Ejercita Obsidian en [Ejercicios Markdown - Sección 3](Ejercicios_Markdown.md#sección-3-markdown-en-obsidian)
+> 💡 **Práctica:** Ejercita Obsidian y Diagramas en [Ejercicios Markdown - Nivel Avanzado](Ejercicios_Markdown.md#sección-2-obsidian-y-diagramas)
 
 ---
 
@@ -392,9 +403,6 @@ digraph {
 
 !!! warning
     Advertencia importante.
-```
-
-> 💡 **Práctica:** Ejercita extensiones en [Ejercicios Markdown - Sección 4](Ejercicios_Markdown.md#sección-4-extensiones-comunes)
 
 ---
 
@@ -456,7 +464,7 @@ Párrafo con**énfasis**y[enlace](url).
 - Alinear columnas para legibilidad
 - Considerar listas para datos simples
 
-> 💡 **Práctica:** Aplica buenas prácticas en [Ejercicios Markdown - Sección 5](Ejercicios_Markdown.md#sección-5-buenas-prácticas)
+> 💡 **Práctica:** Aplica todo lo aprendido en el [Ejercicio Final Integrador](Ejercicios_Markdown.md#ejercicio-final-integrador)
 
 ---
 

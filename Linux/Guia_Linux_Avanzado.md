@@ -28,6 +28,14 @@ chmod +x script.sh
 ./script.sh
 ```
 
+### Tips de Robustez (¡Muy recomendado!)
+
+Añade esto al principio de tus scripts después del shebang:
+```bash
+set -e  # El script se detiene inmediatamente si un comando falla
+set -x  # Muestra cada comando antes de ejecutarlo (útil para debug)
+```
+
 ### Variables
 
 ```bash
@@ -206,10 +214,10 @@ After=network.target
 
 [Service]
 Type=simple
-User=ubuntu
-ExecStart=/home/ubuntu/script.sh
-Restart=on-failure
-RestartSec=5
+User=usuario-robot
+ExecStart=/home/usuario-robot/script.sh
+Restart=on-failure    # Reinicia si el programa crashea
+RestartSec=5         # Espera 5s antes de reiniciar
 
 [Install]
 WantedBy=multi-user.target
@@ -264,6 +272,18 @@ sudo systemctl start mi-servicio
 
 ---
 
+## Compresión y Archivado (Tar)
+
+En robótica solemos comprimir carpetas de logs o workspaces enteros para compartirlos.
+
+| Comando | Descripción | Ejemplo |
+|---------|-------------|---------|
+| `tar -czvf` | Comprimir en .tar.gz | `tar -czvf bkp.tar.gz ./mi_workspace` |
+| `tar -xzvf` | Descomprimir .tar.gz | `tar -xzvf bkp.tar.gz` |
+| `zip -r` | Comprimir en .zip | `zip -r bkp.zip ./mi_dir` |
+
+---
+
 ## Variables de Entorno
 
 ### Ver y definir variables
@@ -293,15 +313,18 @@ Añadir a `~/.bashrc`:
 export ROS_DOMAIN_ID=42
 export PATH=$PATH:/mi/ruta
 alias ll='ls -la'
+alias robot='ssh usuario-robot@192.168.1.42'
 ```
 
-Aplicar cambios:
+Aplicar cambios inmediatamente:
 ```bash
 source ~/.bashrc
 ```
 
-### Comandos útiles
+> 💡 **Tip:** Los Aliases son la forma más rápida de automatizar tu flujo diario. ¡Ponle nombre a todo lo que escribas más de 5 veces al día!
 
+### Comandos útiles
+...
 | Comando | Descripción |
 |---------|-------------|
 | `env` | Muestra todas las variables |
@@ -322,7 +345,19 @@ source ~/.bashrc
 |---------|-------------|
 | `top` | Procesos y uso de recursos |
 | `htop` | Monitor interactivo mejorado |
+| `nload` | Ver tráfico de red gráfico |
 | `free -h` | Memoria disponible |
+
+### El poder de htop
+
+Dentro de `htop`, puedes usar estas teclas:
+- **`F6`**: Cambiar el criterio de ordenación (ej: por % de Memoria).
+- **`F9`**: Matar un proceso seleccionado.
+- **`F10`**: Salir.
+- **`/`**: Buscar un proceso por nombre.
+
+### Monitorización de Red (nload)
+Si el video del robot llega con retraso, ejecuta `nload`. Verás barras gráficas de entrada y salida de datos en tiempo real para cada interfaz (WLAN, ETH).
 | `df -h` | Espacio en disco |
 | `du -sh *` | Tamaño de carpetas |
 | `uptime` | Tiempo encendido y carga |
@@ -358,9 +393,37 @@ mpstat 1
 | Comando | Descripción |
 |---------|-------------|
 | `lspci` | Dispositivos PCI |
-| `lsusb` | Dispositivos USB |
+| `lsusb` | Dispositivos USB (¡Vital para sensores!) |
 | `lsblk` | Dispositivos de bloque |
+| `dmesg -w` | Logs del Kernel (Para ver cuando conectas sensores) |
 | `hwinfo` | Info completa (requiere instalación) |
+
+---
+
+## Casos de Uso Específicos (Hardware y Sincronización)
+
+Estas herramientas se utilizan en proyectos avanzados que requieren control total sobre el hardware o múltiples sistemas trabajando en paralelo.
+
+### 1. Nombres fijos para dispositivos USB (Udev Rules)
+Por defecto, los nombres `/dev/ttyUSB0` pueden cambiar. Con las reglas de Udev, puedes fijarlos (ej: `/dev/sensor_lidar`).
+
+### 2. Sincronización de Tiempo (Chrony)
+Fundamental cuando usas varios ordenadores que deben tener la misma hora exacta (ej: un robot y un servidor).
+
+---
+
+## Limpieza del Sistema (Mantenimiento)
+...
+En robótica es fácil quedarse sin espacio por culpa de logs pesados.
+
+| Acción | Comando |
+| :--- | :--- |
+| Ver 10 carpetas más pesadas | `du -hs * | sort -rh | head -10` |
+| Limpiar cache de APT | `sudo apt clean` |
+| Borrar paquetes inútiles | `sudo apt autoremove` |
+| Limpiar logs de ROS 2 | `rm -rf ~/.ros/log/*` |
+
+> 💡 **Tip:** Usa el comando `ncdu` (si está instalado) para navegar visualmente por las carpetas y ver qué está ocupando espacio.
 
 > 💡 **Práctica:** Ejercita diagnóstico en [Ejercicios Linux - Sección 5](Ejercicios_Linux.md#sección-5-diagnóstico-del-sistema)
 
