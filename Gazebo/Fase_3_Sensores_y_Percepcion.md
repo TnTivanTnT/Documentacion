@@ -2,25 +2,15 @@
 
 > 📚 [Volver al Índice de Documentación](../README.md)
 
-Hasta ahora, tenemos un robot que se mueve, pero es "ciego": no sabe si tiene una pared delante. En esta fase, le daremos un sensor LiDAR para que pueda "ver" y aprenderemos a llevar esa información desde el simulador hasta el cerebro del robot (ROS 2).
+En esta fase daremos un sensor LiDAR al robot para que detecte obstáculos.
 
 ---
 
-## 1. El Concepto: ¿Cómo "ve" el robot?
+## 1. Integración del LiDAR en el URDF
 
-El flujo de información es el siguiente:
-1.  **Gazebo:** Genera rayos láser virtuales que chocan contra las paredes.
-2.  **El Bridge:** Actúa como un cable que traduce esos rayos de Gazebo al idioma de ROS 2.
-3.  **RViz2:** Nos permite a nosotros ver lo mismo que está viendo el robot.
-4.  **Tu Código:** Analiza esos datos para decidir si el robot debe frenar o girar.
+Abre `description/robot.urdf` y añade estos bloques antes de la última línea `</robot>`.
 
----
-
-## 2. Paso A: Añadir el Sensor físico al URDF
-
-Abre `description/robot.urdf` y añade estos dos bloques antes de `</robot>`.
-
-### La pieza física (Link y Joint)
+### El soporte físico (Link y Joint)
 ```xml
   <link name="lidar_link">
     <visual>
@@ -43,7 +33,7 @@ Abre `description/robot.urdf` y añade estos dos bloques antes de `</robot>`.
   </joint>
 ```
 
-### El sensor de Gazebo (El plugin)
+### El sensor virtual (Plugin)
 ```xml
   <gazebo reference="lidar_link">
     <sensor name="gpu_lidar" type="gpu_lidar">
@@ -73,56 +63,46 @@ Abre `description/robot.urdf` y añade estos dos bloques antes de `</robot>`.
 
 ---
 
-## 3. Paso B: Conectar el Ojo con el Cerebro (El Bridge)
+## 2. Ejecución: ¿Cómo ver los datos en RViz2?
 
-Para que ROS 2 reciba los datos, abre una terminal nueva y ejecuta el "traductor":
+Para que los puntos aparezcan en RViz2, necesitas tener tres terminales funcionando a la vez:
 
+### Terminal 1: El Puente (Bridge)
+Pasa los datos de Gazebo a ROS 2.
 ```bash
 ros2 run ros_gz_bridge parameter_bridge /scan@sensor_msgs/msg/LaserScan@ignition.msgs.LaserScan
 ```
-**¿Por qué este comando?** Porque el LiDAR publica en un formato de Ignition, y nosotros necesitamos que llegue a ROS 2 como un `LaserScan`.
+
+### Terminal 2: El Publicador de Estado (Robot State Publisher)
+**CRUCIAL:** RViz necesita saber que el LiDAR está "pegado" al chasis. Este comando lee tu URDF y publica las posiciones de las piezas.
+```bash
+ros2 run robot_state_publisher robot_state_publisher --ros-args -p robot_description:="$(cat description/robot.urdf)"
+```
+
+### Terminal 3: RViz2
+Abre el visualizador y configúralo así:
+1.  Ejecuta `rviz2`.
+2.  **Fixed Frame:** Cámbialo a `base_link` (escribe el nombre a mano si no sale).
+3.  **Añadir Láser:** Dale a **Add** -> **By topic** -> selecciona **/scan**.
+4.  **Añadir Robot:** Dale a **Add** -> **By display type** -> selecciona **RobotModel**.
 
 ---
 
-## 4. Paso C: Ver a través de los ojos del robot (RViz2)
+## 3. Lógica de Detección de Obstáculos
 
-Ahora comprobaremos si la conexión es correcta usando el visualizador técnico.
+Ahora que los datos están en ROS 2, un programa puede leerlos para tomar decisiones.
 
-1.  Lanza RViz2: `ros2 run rviz2 rviz2`
-2.  **Configura el entorno:** En la columna izquierda, cambia `Fixed Frame` de "map" a **`base_link`**.
-3.  **Añade el sensor:**
-    - Haz clic en **Add** (abajo a la izquierda).
-    - Selecciona la pestaña **By topic**.
-    - Busca `/scan` y dale a OK.
-4.  **Verificación:** Deberías ver líneas rojas o puntos apareciendo alrededor de tu robot. ¡Esos son los obstáculos que el robot está detectando!
-
----
-
-## 5. Paso D: Detección de Obstáculos (Lógica)
-
-Ahora que los datos están en ROS 2, podemos crear un nodo que tome decisiones. Esto es lo que permite que el robot no choque.
-
-**Ejemplo de lógica para un nodo Python:**
 ```python
 def scan_callback(self, msg):
-    # msg.ranges contiene las distancias en 360 grados
-    # El centro del array es lo que hay justo delante
+    # La distancia justo delante es el centro de la lista
     distancia_frontal = msg.ranges[len(msg.ranges)//2]
 
     if distancia_frontal < 0.5:
-        self.get_logger().warn("¡PARED DETECTADA! Frenando...")
-        # Aquí enviaríamos una velocidad de 0 al robot
+        self.get_logger().warn("¡Obstáculo detectado!")
 ```
-
----
-
-## Resumen de la Fase 3
--   **Hemos dado un ojo al robot** (URDF).
--   **Hemos conectado el ojo al cerebro** (Bridge).
--   **Hemos aprendido a visualizar sus pensamientos** (RViz2).
 
 ---
 
 ## Siguientes Pasos
 
-Continúa con la **[Fase 4: Mapeo y SLAM](Fase_4_Mapeo_y_SLAM.md)**. Usaremos esta "vista" para dibujar un mapa de toda la habitación.
+Continúa con la **[Fase 4: Mapeo y SLAM](Fase_4_Mapeo_y_SLAM.md)** para guardar un mapa de lo que el láser está viendo.
