@@ -101,8 +101,12 @@ Crea el archivo **`description/robot.urdf`** y pega este código completo. Es un
       <wheel_separation>0.35</wheel_separation>
       <wheel_radius>0.1</wheel_radius>
       <topic>cmd_vel</topic>
+      
+      <odom_publish_frequency>50</odom_publish_frequency>
+      <odom_tf>true</odom_tf>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_link</child_frame_id>
     </plugin>
-
     <!-- PLUGIN PARA PUBLICAR LA POSICIÓN DE LAS RUEDAS (Joint States) -->
     <plugin filename="ignition-gazebo-joint-state-publisher-system" name="ignition::gazebo::systems::JointStatePublisher">
     </plugin>

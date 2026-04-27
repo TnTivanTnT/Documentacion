@@ -42,8 +42,40 @@ mkdir description launch worlds meshes config
 
 Recuerda que en ROS 2 Python, **no basta con crear las carpetas**. Debes decirle a ROS 2 que esas carpetas deben ser "instaladas" cuando compiles el proyecto. 
 
-Esto se hace editando el archivo `setup.py`, como se detalla al inicio de la **Fase 1**.
+```Python
+import os
+from glob import glob
+from setuptools import setup
 
+package_name = 'mi_robot_sim'
+
+setup(
+    name=package_name,
+    version='0.0.0',
+    packages=[package_name],
+    data_files=[
+        ('share/ament_index/resource_index/packages',
+            ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+        # Instalación de las carpetas del proyecto
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+        (os.path.join('share', package_name, 'description'), glob('description/*')),
+        (os.path.join('share', package_name, 'worlds'), glob('worlds/*')),
+        (os.path.join('share', package_name, 'config'), glob('config/*')),
+    ],
+    install_requires=['setuptools'],
+    zip_safe=True,
+    maintainer='tu_nombre',
+    maintainer_email='tu@email.com',
+    description='Simulación de robot diferencial en Gazebo',
+    license='Apache License 2.0',
+    tests_require=['pytest'],
+    entry_points={
+        'console_scripts': [
+        ],
+    },
+)
+```
 ---
 
 ## Siguientes Pasos

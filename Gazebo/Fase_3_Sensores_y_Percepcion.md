@@ -68,6 +68,11 @@ Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el
       <wheel_separation>0.35</wheel_separation>
       <wheel_radius>0.1</wheel_radius>
       <topic>cmd_vel</topic>
+      
+      <odom_publish_frequency>50</odom_publish_frequency>
+      <odom_tf>true</odom_tf>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_link</child_frame_id>
     </plugin>
     <!-- Publicador de estado de las ruedas -->
     <plugin filename="ignition-gazebo-joint-state-publisher-system" name="ignition::gazebo::systems::JointStatePublisher">
@@ -117,7 +122,8 @@ ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot -z 0.01
 ros2 run ros_gz_bridge parameter_bridge \
   /cmd_vel@geometry_msgs/msg/Twist@ignition.msgs.Twist \
   /scan@sensor_msgs/msg/LaserScan@ignition.msgs.LaserScan \
-  /model/mi_robot/joint_state@sensor_msgs/msg/JointState@ignition.msgs.Model
+  /model/mi_robot/joint_state@sensor_msgs/msg/JointState@ignition.msgs.Model \
+  /model/mi_robot/tf@tf2_msgs/msg/TFMessage@ignition.msgs.Pose_V
 ```
 
 ### Terminal 4: Publicador de Estado (Robot State Publisher)
