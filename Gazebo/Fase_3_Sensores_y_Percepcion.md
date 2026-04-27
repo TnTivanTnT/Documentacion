@@ -71,7 +71,8 @@ Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el
     </plugin>
     <!-- Publicador de estado de las ruedas -->
     <plugin filename="ignition-gazebo-joint-state-publisher-system" name="ignition::gazebo::systems::JointStatePublisher">
-      <joint_name>left_wheel_joint</joint_name>
+     <topic>/model/mi_robot/joint_state</topic>
+     <joint_name>left_wheel_joint</joint_name>
       <joint_name>right_wheel_joint</joint_name>
     </plugin>
   </gazebo>
