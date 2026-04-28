@@ -129,10 +129,7 @@ ros2 run ros_gz_bridge parameter_bridge \
 ### Terminal 4: Publicador de Estado (Robot State Publisher)
 Este comando le dice a ROS cómo está montado el robot y dónde están las ruedas.
 ```bash
-ros2 run robot_state_publisher robot_state_publisher --ros-args \
-  -p robot_description:="$(cat description/robot.urdf)" \
-  -p use_sim_time:=True \
-  -r /joint_states:=/model/mi_robot/joint_state
+ros2 run robot_state_publisher robot_state_publisher description/robot.urdf --ros-args -p use_sim_time:=true
 ```
 
 ### Terminal 5: RViz2
