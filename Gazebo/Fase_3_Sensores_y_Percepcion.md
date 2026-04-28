@@ -56,11 +56,11 @@ Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el
 
   <!-- LIDAR (Láser) -->
   <link name="lidar_link">
-    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="red"><color rgba="1 0 0 1"/></material></visual>
-    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
+    <visual><geometry><cylinder radius="0.05" length="0.15"/></geometry><material name="red"><color rgba="1 0 0 1"/></material></visual>
+    <collision><geometry><cylinder radius="0.05" length="0.15"/></geometry></collision>
     <inertial><mass value="0.1"/><inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/></inertial>
   </link>
-  <joint name="lidar_joint" type="fixed"><parent link="chassis"/><child link="lidar_link"/><origin xyz="0.1 0 0.08"/></joint>
+  <joint name="lidar_joint" type="fixed"><parent link="chassis"/><child link="lidar_link"/><origin xyz="0.1 0 0.2"/></joint>
 
   <!-- PLUGINS DE GAZEBO -->
   <gazebo>
