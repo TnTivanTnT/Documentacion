@@ -120,10 +120,16 @@ ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot -z 0.01
 ### Terminal 3: El Puente (Bridge)
 ```bash
 ros2 run ros_gz_bridge parameter_bridge \
-  /cmd_vel@geometry_msgs/msg/Twist@ignition.msgs.Twist \
-  /scan@sensor_msgs/msg/LaserScan@ignition.msgs.LaserScan \
-  /model/mi_robot/joint_state@sensor_msgs/msg/JointState@ignition.msgs.Model \
-  /model/mi_robot/tf@tf2_msgs/msg/TFMessage@ignition.msgs.Pose_V
+  /cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist \
+  /scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan \
+  /model/mi_robot/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model \
+  /model/mi_robot/tf@tf2_msgs/msg/TFMessage[ignition.msgs.Pose_V \
+  /model/mi_robot/odometry@nav_msgs/msg/Odometry[ignition.msgs.Odometry \
+  --ros-args \
+  -p use_sim_time:=true \
+  -r /model/mi_robot/joint_state:=/joint_states \
+  -r /model/mi_robot/tf:=/tf \
+  -r /model/mi_robot/odometry:=/odom
 ```
 
 ### Terminal 4: Publicador de Estado (Robot State Publisher)
