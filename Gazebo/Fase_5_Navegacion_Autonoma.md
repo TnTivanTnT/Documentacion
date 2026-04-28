@@ -32,7 +32,7 @@ Necesitamos tres elementos corriendo simultáneamente:
 ```bash
 ros2 launch nav2_bringup bringup_launch.py \
     use_sim_time:=True \
-    map:=/ruta/a/tu/mi_mapa.yaml
+    map:=/mapas/mi_mapa.yaml
 ```
 
 ---

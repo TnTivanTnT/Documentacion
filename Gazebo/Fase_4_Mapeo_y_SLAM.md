@@ -54,7 +54,8 @@ Una vez que hayas recorrido todo el entorno y estés satisfecho con el resultado
 Puedes hacerlo desde el panel de SLAM Toolbox en RViz o por terminal:
 
 ```bash
-ros2 run nav2_map_server map_saver_cli -f mi_mapa
+mkdir -p mapas
+ros2 run nav2_map_server map_saver_cli -f mapas/mi_mapa
 ```
 
 Esto generará dos archivos:
