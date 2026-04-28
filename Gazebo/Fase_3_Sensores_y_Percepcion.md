@@ -16,6 +16,9 @@ Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el
 <?xml version="1.0"?>
 <robot name="mi_robot">
 
+  <!-- LINK DE REFERENCIA PARA EL MAPA-->
+  <link name="base_footprint"></link>
+
   <!-- ORIGEN -->
   <link name="base_link"></link>
 
@@ -120,6 +123,7 @@ ros2 run ros_gz_sim create -file description/robot.urdf -name mi_robot -z 0.01
 ### Terminal 3: El Puente (Bridge)
 ```bash
 ros2 run ros_gz_bridge parameter_bridge \
+  /clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock \
   /cmd_vel@geometry_msgs/msg/Twist]ignition.msgs.Twist \
   /scan@sensor_msgs/msg/LaserScan[ignition.msgs.LaserScan \
   /model/mi_robot/joint_state@sensor_msgs/msg/JointState[ignition.msgs.Model \

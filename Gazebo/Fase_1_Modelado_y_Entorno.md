@@ -11,6 +11,9 @@ Crea el archivo **`description/robot.urdf`** y pega este código completo. Es un
 <?xml version="1.0"?>
 <robot name="mi_robot">
 
+  <!-- LINK DE REFERENCIA PARA EL MAPA-->
+  <link name="base_footprint"></link>
+  
   <!-- LINK DE ORIGEN (En el suelo, entre las ruedas) -->
   <link name="base_link"></link>
 
@@ -130,7 +133,6 @@ Crea **`worlds/mi_mundo.sdf`**:
       <real_time_factor>1.0</real_time_factor>
     </physics>
 
-    <!-- Plugins esenciales de Ignition -->
     <plugin filename="libignition-gazebo-physics-system.so" name="ignition::gazebo::systems::Physics"/>
     <plugin filename="libignition-gazebo-user-commands-system.so" name="ignition::gazebo::systems::UserCommands"/>
     <plugin filename="libignition-gazebo-scene-broadcaster-system.so" name="ignition::gazebo::systems::SceneBroadcaster"/>
@@ -138,17 +140,84 @@ Crea **`worlds/mi_mundo.sdf`**:
       <render_engine>ogre2</render_engine>
     </plugin>
 
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
     <model name="ground_plane">
       <static>true</static>
       <link name="link">
         <collision name="collision">
-          <geometry><plane><normal>0 0 1</normal></plane></geometry>
+          <geometry><plane><normal>0 0 1</normal><size>20 20</size></plane></geometry>
         </collision>
         <visual name="visual">
-          <geometry><plane><normal>0 0 1</normal></plane></geometry>
+          <geometry><plane><normal>0 0 1</normal><size>20 20</size></plane></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse></material>
         </visual>
       </link>
     </model>
+
+    <model name="wall_north">
+      <static>true</static>
+      <pose>5 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.1 10 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.1 10 1</size></box></geometry></visual>
+      </link>
+    </model>
+    <model name="wall_south">
+      <static>true</static>
+      <pose>-5 0 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.1 10 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.1 10 1</size></box></geometry></visual>
+      </link>
+    </model>
+    <model name="wall_east">
+      <static>true</static>
+      <pose>0 5 0.5 0 0 1.57</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.1 10 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.1 10 1</size></box></geometry></visual>
+      </link>
+    </model>
+    <model name="wall_west">
+      <static>true</static>
+      <pose>0 -5 0.5 0 0 1.57</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.1 10 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.1 10 1</size></box></geometry></visual>
+      </link>
+    </model>
+
+    <model name="box_1">
+      <pose>2 2 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1 1 1</size></box></geometry></visual>
+      </link>
+    </model>
+
+    <model name="cylinder_1">
+      <pose>-2 3 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.5</radius><length>1</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.5</radius><length>1</length></cylinder></geometry></visual>
+      </link>
+    </model>
+
+    <model name="box_2">
+      <pose>0 -3 0.5 0 0 0.78</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.5 2 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.5 2 1</size></box></geometry></visual>
+      </link>
+    </model>
+
   </world>
 </sdf>
 ```
