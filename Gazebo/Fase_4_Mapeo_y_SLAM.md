@@ -36,6 +36,12 @@ ros2 launch slam_toolbox online_async_launch.py \
 
 *Nota: `use_sim_time:=True` es CRUCIAL en simulación para que ROS sincronice su reloj con Gazebo.*
 
+### Traducción base_link to base_footprint para que funcione el mapeo
+
+```bash
+ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_link base_footprint
+```
+
 ---
 
 ## 3. El Proceso de Mapeo

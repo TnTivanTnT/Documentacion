@@ -16,9 +16,6 @@ Sobrescribe tu archivo **`description/robot.urdf`** con este código. Incluye el
 <?xml version="1.0"?>
 <robot name="mi_robot">
 
-  <!-- LINK DE REFERENCIA PARA EL MAPA-->
-  <link name="base_footprint"></link>
-
   <!-- ORIGEN -->
   <link name="base_link"></link>
 
